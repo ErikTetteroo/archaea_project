@@ -1,0 +1,68 @@
+GCF_002214165.1
+Ile2 CAT > Ile TAT        
+Leu GAG > Leu AAG                 
+Pro GGG/Pro TGG(matching pseudogene) > Pro AGG
+
+ile changes:
+
+GCF_003086415.1
+Ile2 CAT > Ile TAT
+GCF_008000775.2
+Ile2 CAT > Ile TAT
+GCF_009617975.1
+Ile2 CAT > Ile TAT
+GCF_000019605.1
+Ile2 CAT > Ile TAT
+GCF_002214165.1
+Ile2 CAT > Ile TAT  
+GCF_023169545.1
+Ile2 CAT > Ile TAT
+GCF_029207735.1
+Ile2 CAT > Ile TAT
+GCF_029232205.1
+Ile2 CAT > Ile TAT
+GCF_041410205.1
+Ile2 CAT > Ile TAT
+GCF_920984865.1
+Ile2 CAT > Ile TAT
+
+ile additions (no loss of ile2):
+GCF_000504205.1
+? > Ile TAT
+GCF_020177375.1
+? > Ile TAT
+GCF_900106715.1
+? > Ile TAT
+
+shift to a starting anticodon:
+GCF_000024185.1
+Arg CCG > Arg ACG
+
+GCF_000152265.2
+Leu GAG > Leu AAG
+
+GCF_001402935.1
+Leu CAA/Leu GAG > Leu AAG
+
+GCF_001402945.1
+Leu GAG > Leu AAG
+
+GCF_002078355.1
+Leu GAG > Leu AAG
+
+GCF_019931065.1
+Pro CGG/Pro GGG > Pro AGG
+
+a starting anticodon additions (the removed combo did not match)
+GCF_000230735.2
+??Arg CCG > Gly ACC?
+
+GCF_031165565.1
+??Arg CCG > Gly ACC
+
+GCF_037081675.1
+??Ala TGC > Val AAC
+
+GCF_900103415.1
+? > Leu AAG
+
