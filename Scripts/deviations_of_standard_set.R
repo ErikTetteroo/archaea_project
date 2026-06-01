@@ -84,3 +84,45 @@ codon_delta_profiles <- coverage_effects %>%
     delta_CV = sum(delta),
     .groups = "drop"
   )
+
+aa_delta_state_counts <- codon_delta_profiles %>%
+  group_by(
+    tRNA_type,
+    codon,
+    delta_M,
+    delta_GUw,
+    delta_CV
+  ) %>%
+  summarise(
+    n = n_distinct(organism_id),
+    organisms = paste(sort(unique(organism_id)), collapse = ";"),
+    .groups = "drop"
+  ) %>%
+  arrange(tRNA_type, desc(n))
+
+aa_delta_states <- codon_delta_profiles %>%
+  
+  # Create codon-level event strings
+  mutate(
+    event = paste0(
+      codon,
+      "(",
+      delta_M, ",",
+      delta_GUw, ",",
+      delta_CV,
+      ")"
+    )
+  ) %>%
+  
+  # Collapse into amino-acid-specific signatures
+  group_by(organism_id, tRNA_type) %>%
+  summarise(
+    aa_signature = paste(sort(event), collapse = ";"),
+    .groups = "drop"
+  )
+
+# Count recurring amino-acid decoding states
+aa_delta_state_counts <- aa_delta_states %>%
+  count(tRNA_type, aa_signature, sort = TRUE)
+
+#write_csv(aa_delta_state_counts,"Data/aa_deviating_state_counts.csv")
