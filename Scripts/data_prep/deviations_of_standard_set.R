@@ -1,6 +1,4 @@
-library(tidyverse)
-library(dplyr)
-library(tidyr)
+source("R/load_project.R")
 
 standard_set_coverage_table <- read_csv("Data/standard_set_coverage_table.csv")
 missing_common_combos <- read_csv("Data/missing_common_combos_u.csv")
@@ -153,6 +151,22 @@ aa_delta_state_counts <- aa_delta_states %>%
 questionable_deviations_u <- read_csv("Data/questionable deviations.csv")
 questionable_deviations_u_m <- read_csv("Data/questionable deviations_m.csv")
 
+
+aa_delta_state_counts <- aa_delta_states %>%
+  group_by(tRNA_type, aa_signature) %>%
+  summarise(
+    n = n(),
+    
+    has_manual = as.integer(
+      any(organism_id %in% manuscript_ids$manual_genomes)
+    ),
+    
+    # keep all organism IDs as a list-column
+    organism_ids = list(unique(organism_id)),
+    
+    .groups = "drop"
+  ) %>%
+  arrange(desc(n))
 
 possible_aa_delta_states <- aa_delta_state_counts %>%
   left_join(

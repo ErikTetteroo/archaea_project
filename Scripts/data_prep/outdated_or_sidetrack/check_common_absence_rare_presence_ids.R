@@ -1,8 +1,6 @@
-merged <- read_csv("Data\\Merged_data_m.csv")
-mcc <- read_csv("Data\\missing_common_combos.csv")
-prc <- read_csv("Data\\present_rare_combos.csv")
-
-test <- merged[merged$organism_id=="GCF_014876775.1",]
+merged <- read_csv("Data/Merged_data_m.csv")
+mcc <- read_csv("Data/missing_common_combos.csv")
+prc <- read_csv("Data/present_rare_combos.csv")
 
 mergedo <- merged[order(merged$GC3),]
 unique(merged$species)
@@ -46,6 +44,5 @@ combined_trna_changes <- bind_rows(
   arrange(organism_id, present, tRNA_type, anticodon)
 
 unique(prc_subset$organism_id)
-
 
 combined_trna_changes[combined_trna_changes$organism_id==unique(combined_trna_changes$organism_id)[44],]

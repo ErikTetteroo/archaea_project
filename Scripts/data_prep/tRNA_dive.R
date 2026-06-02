@@ -1,6 +1,4 @@
-library(dplyr)
-library(tidyverse)
-library(tidyr)
+source("R/load_project.R")
 
 #load in data
 tRNA <- read_csv("Data\\trna_summary_u.csv")

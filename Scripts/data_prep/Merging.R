@@ -1,7 +1,5 @@
 #load packages
-library(dplyr)
-library(stringr)
-library(ggplot2)
+source("R/load_project.R")
 
 #Data prep#####################################################################
 #read in codon usage, trna data, and conversion table

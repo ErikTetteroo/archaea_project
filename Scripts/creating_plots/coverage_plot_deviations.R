@@ -1,21 +1,17 @@
 # Archaeal tRNA Coverage Plotting Functions
-library(dplyr)
-library(tidyverse)
-library(tidyr)
-library(ggplot2)
-library(stringr)
-library(patchwork)
-source("Functions/coverage_plot_function.R")
+source("R/load_project.R")
+source("R/coverage_plot_function.R")
 
 standard_set_coverage_table <- read_csv("Data/standard_set_coverage_table.csv")
-deviating_aa_sets <- read.csv("Data/aa_deviating_state_counts_u.csv")
+deviating_aa_sets <- read.csv("Data/aa_deviating_state_counts_u_p.csv")
 
 # =========================================================
 # USER INPUTS
 # =========================================================
 
 GUweight <- 0.5
-deviation_row <- deviating_aa_sets[1,]
+#deviation_row <- deviating_aa_sets[1,]
+deviating_aa_sets <- deviating_aa_sets[deviating_aa_sets$impossible==0,]
 
 # =========================================================
 # CODON ORDER

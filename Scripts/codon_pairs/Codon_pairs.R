@@ -1,8 +1,5 @@
 #load packages
-library(dplyr)
-library(tidyr)
-library(tibble)
-library(ggplot2)
+source("R/load_project.R")
 
 #load in codon pair dataset & merged dataset
 Codon_pair_usage <- read.table("Data\\Raw_data\\combined_codon_pair_usage.csv", sep = ',', header = T)

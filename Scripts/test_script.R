@@ -1,7 +1,4 @@
-library(tidyverse)
-library(tidyr)
-library(dplyr)
-library(stringr)
+source("R/load_project.R")
 
 merged <- read_csv("Data/Merged_data_m.csv")
 standard_set_coverage_table <- read_csv("Data/standard_set_coverage_table.csv")
@@ -109,9 +106,6 @@ summary(
   lm(RSCU ~ CV + GC3, data = ala_gcg)
 )
 
-
-library(tidyr)
-library(dplyr)
 
 # Expand organism list-column
 arg_states <- possible_states_only %>%

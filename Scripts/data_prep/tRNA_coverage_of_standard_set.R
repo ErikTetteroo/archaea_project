@@ -1,6 +1,4 @@
-library(tidyverse)
-library(dplyr)
-library(tidyr)
+source("R/load_project.R")
 
 coverage_table <- read_csv("Data/Coverage_table.csv")
 trna <- read_csv("Data/Raw_data/trnas_summary.csv")

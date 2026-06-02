@@ -1,6 +1,4 @@
-library(tidyverse)
-library(dplyr)
-library(tidyr)
+source("R/load_project.R")
 
 manuscript_data <- read_csv("Data/Raw_data/archaea_complete_curated_zenodo.csv")
 trna_dat <- read.csv("Data/Raw_data/trnas_summary.csv")

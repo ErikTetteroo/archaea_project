@@ -1,5 +1,4 @@
-library(dplyr)
-library(tidyverse)
+source("R/load_project.R")
 
 #load in data
 merged <- read_csv("Data\\Merged_data.csv")

@@ -1,8 +1,4 @@
-library(dplyr)
-library(tidyverse)
-library(tidyr)
-library(ggplot2)
-library(stringr)
+source("R/load_project.R")
 
 standard_set_coverage_table <- read_csv("Data/standard_set_coverage_table.csv")
 
