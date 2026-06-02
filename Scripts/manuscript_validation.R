@@ -6,8 +6,6 @@ manuscript_data <- read_csv("Data/Raw_data/archaea_complete_curated_zenodo.csv")
 trna_dat <- read.csv("Data/Raw_data/trnas_summary.csv")
 matches <- read.csv("Data/manuscript_match_id.csv")
 
-
-
 #Create consistent organism id
 trna <- trna_dat %>%
   mutate(organism_id = str_extract(organism, "GCF_[0-9]+\\.[0-9]+"))
@@ -27,7 +25,13 @@ manuscript_trimmed <- manuscript_data %>%
     by = "Assembly_Acc"
   )
 
+manuscript_trimmed_filtered <- manuscript_trimmed %>%
+  filter(is.na(curation) | curation == "ok")
+
 which(trna$organism_id=='GCF_000195935.2')
+
+manuscript_trimmed_filtered$tRNA_Type[manuscript_trimmed_filtered$comment_Peter=="splicing went wrong, this is no TTT but CGA and is OK"] <- "Ser"
+
 
 # -----------------------------
 # Clean your trnascan-se results
@@ -45,7 +49,8 @@ trna_clean <- trna_trimmed %>%
 # --------------------------------
 # Clean manuscript annotation data
 # --------------------------------
-manuscript_clean <- manuscript_trimmed %>%
+
+manuscript_clean <- manuscript_trimmed_filtered %>%
   transmute(
     genome = unique.merged.organism_id.,
     trna_type = tRNA_Type,
@@ -54,6 +59,54 @@ manuscript_clean <- manuscript_trimmed %>%
     # Standardize pseudogene call
     pseudo = ifelse(is.na(Pseudogene), 0, 1)
   )
+#---------------------------------
+# ----------------------------------------
+# Genomes manually curated in manuscript
+# ----------------------------------------
+manual_genomes <- unique(manuscript_clean$genome)
+#write_csv(as.data.frame(manual_genomes),"Data/manuscript_match_ids.csv")
+# ----------------------------------------
+# Remove original tRNAs for those genomes
+# ----------------------------------------
+trna_without_manual <- trna %>%
+  filter(!organism_id %in% manual_genomes) %>%
+  mutate(source = "trnascan")
+
+# ----------------------------------------
+# Convert manuscript rows into trna format
+# ----------------------------------------
+manuscript_as_trna <- manuscript_clean %>%
+  transmute(
+    organism = paste0(genome, "_MANUAL_CURATED"),
+    tRNA_type = trna_type,
+    anticodon = anticodon,
+    
+    # High score so they survive filtering
+    inf_score = 999,
+    
+    note = ifelse(
+      pseudo == 1,
+      "pseudo",
+      "manual_curated"
+    ),
+    
+    organism_id = genome,
+    
+    # provenance
+    source = "manuscript"
+  )
+
+# ----------------------------------------
+# Combine back together
+# ----------------------------------------
+trna_updated <- bind_rows(
+  trna_without_manual,
+  manuscript_as_trna
+)
+
+#write_csv(trna_updated,"Data/trna_summary_u.csv")
+
+#---------------------------------
 
 # Your predictions
 trna_counts <- trna_clean %>%

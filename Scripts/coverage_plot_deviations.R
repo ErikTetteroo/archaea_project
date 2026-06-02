@@ -8,7 +8,7 @@ library(patchwork)
 source("Functions/coverage_plot_function.R")
 
 standard_set_coverage_table <- read_csv("Data/standard_set_coverage_table.csv")
-deviating_aa_sets <- read.csv("Data/aa_deviating_state_counts.csv")
+deviating_aa_sets <- read.csv("Data/aa_deviating_state_counts_u.csv")
 
 # =========================================================
 # USER INPUTS
@@ -147,3 +147,4 @@ for (i in seq_len(nrow(deviating_aa_sets))) {
   
   message("Saved: ", filepath)
 }
+

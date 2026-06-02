@@ -3,22 +3,18 @@ library(tidyverse)
 library(tidyr)
 
 #load in data
-tRNA_dat <- read_csv("Data\\Raw_data\\trnas_summary.csv")
+tRNA <- read_csv("Data\\trna_summary_u.csv")
 
-#Create consistent organism id
-trna <- tRNA_dat %>%
-  mutate(organism_id = str_extract(organism, "GCF_[0-9]+\\.[0-9]+"))
-
-#Filter trna pseudo genes & low score genes 
-trna_filtered <- trna %>%
+# Final filtered dataset
+trna_filtered <- tRNA %>%
   filter(
     inf_score > 30,
     is.na(note) | !str_detect(note, "pseudo"),
-    !str_detect(anticodon, "N")   
+    !str_detect(anticodon, "N")
   )
 
-#Keep low a note of everything filtered out
-trna_low_quality <- trna %>%
+# Everything filtered out
+trna_low_quality <- tRNA %>%
   filter(
     inf_score <= 30 |
       (!is.na(note) & str_detect(note, "pseudo")) |
@@ -54,6 +50,10 @@ trna_combo_counts <- trna_clean %>%
 #find out which organisms have rare combos or are missing common combos
 trna_presence <- trna_clean %>%
   distinct(organism_id, tRNA_type, anticodon)
+
+
+
+
 
 rare_combos <- trna_combo_counts %>%
   filter(n_organisms <= 21)
@@ -241,9 +241,9 @@ missing_check2 <- missing_check2 %>%
   select(-combo_note)
 
 #make a copy of parsed manually written notes
-write.csv(manual_notes,
-          "parsed_manual_notes.csv",
-          row.names = FALSE)
+#write.csv(manual_notes,
+#          "parsed_manual_notes.csv",
+#          row.names = FALSE)
 
 #attach notes to larger dataframe
 missing_common_combos_annotated <- missing_common_combos %>%
@@ -254,5 +254,5 @@ missing_common_combos_annotated <- missing_common_combos %>%
   )
 
 #save a copy of both
-write_csv(missing_common_combos_annotated,"Data\\missing_common_combos.csv")
-write_csv(rare_combo_organisms,"Data\\present_rare_combos.csv")
+write_csv(missing_common_combos,"Data\\missing_common_combos_u.csv")
+write_csv(rare_combo_organisms,"Data\\present_rare_combos_u.csv")
