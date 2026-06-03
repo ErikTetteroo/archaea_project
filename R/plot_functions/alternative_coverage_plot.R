@@ -1,14 +1,52 @@
 create_alternative_coverage_plot <- function(
     df_long,
+    codon_table,
+    aa = NULL,
     title = "coverage of codons by anticodons"
 ) {
+  
+  ###########################################################################
+  # optional amino acid subsetting
+  
+  if (!is.null(aa)) {
+    
+    valid_codons <- codon_table %>%
+      filter(aa == !!aa) %>%
+      pull(codon_rna)
+    
+    valid_anticodons <- codon_table %>%
+      filter(aa == !!aa) %>%
+      pull(anticodon)
+    
+    df_long <- df_long %>%
+      filter(
+        codon %in% valid_codons,
+        anticodon %in% valid_anticodons
+      )
+  }
+  
+  ###########################################################################
+  # ordering
+  
+  codons <- df_long %>%
+    distinct(codon) %>%
+    pull(codon)
+  
+  anticodons <- df_long %>%
+    distinct(anticodon) %>%
+    pull(anticodon)
+  
   df_long <- df_long %>%
     mutate(
       codon = factor(codon, levels = rev(codons)),
       anticodon = factor(anticodon, levels = anticodons)
     )
   
+  ###########################################################################
+  # amino acid boundaries
+  
   aa_boundaries <- codon_table %>%
+    filter(codon_rna %in% codons) %>%
     distinct(codon_rna, aa) %>%
     mutate(
       codon_rna = factor(codon_rna, levels = rev(codons))
@@ -25,6 +63,9 @@ create_alternative_coverage_plot <- function(
       .groups = "drop"
     )
   
+  ###########################################################################
+  # plotting
+  
   ggplot(
     df_long,
     aes(
@@ -36,7 +77,6 @@ create_alternative_coverage_plot <- function(
     
     geom_tile(color = "grey90") +
     
-    # amino acid boundary lines
     geom_hline(
       data = aa_boundaries,
       aes(yintercept = end + 0.5),
@@ -44,7 +84,6 @@ create_alternative_coverage_plot <- function(
       linewidth = 0.4
     ) +
     
-    # amino acid labels
     geom_text(
       data = aa_boundaries,
       aes(
@@ -95,5 +134,6 @@ create_alternative_coverage_plot <- function(
       x = "Anticodon",
       y = "Codon"
     ) +
+    
     ggtitle(title)
 }

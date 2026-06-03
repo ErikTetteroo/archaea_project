@@ -2,8 +2,8 @@
 source("R/load_project.R")
 
 #load in codon pair dataset & merged dataset
-Codon_pair_usage <- read.table("Data\\Raw_data\\combined_codon_pair_usage.csv", sep = ',', header = T)
-merged <- read.table("Data\\Merged_data.csv", sep = ',', header = T)
+codon_pair_usage <- read_csv("Data/Raw_data/combined_codon_pair_usage.csv")
+merged <- read_csv("Data/cleaned_data/merged_codon_usage_data.csv")
 
 #standardize codon format
 merged <- merged %>%
@@ -14,7 +14,7 @@ cv_lookup <- merged %>%
   select(organism_id, codon, CV)
 
 #add coverage value codon 1
-Codon_pair_usage <- Codon_pair_usage %>%
+codon_pair_usage <- codon_pair_usage %>%
   left_join(
     cv_lookup,
     by = c("organism" = "organism_id", "c1" = "codon")
@@ -22,7 +22,7 @@ Codon_pair_usage <- Codon_pair_usage %>%
   rename(CV1 = CV)
 
 #add coverage value codon 2
-Codon_pair_usage <- Codon_pair_usage %>%
+codon_pair_usage <- codon_pair_usage %>%
   left_join(
     cv_lookup,
     by = c("organism" = "organism_id", "c2" = "codon")
@@ -30,11 +30,11 @@ Codon_pair_usage <- Codon_pair_usage %>%
   rename(CV2 = CV)
 
 #combine coverage values (currently multiplied)
-Codon_pair_usage <- Codon_pair_usage %>%
+codon_pair_usage <- codon_pair_usage %>%
   mutate(CVP = CV1 * CV2)
 
 #take log of both
-Codon_pair_usage <- Codon_pair_usage %>%
+codon_pair_usage <- codon_pair_usage %>%
   mutate(log2_CVP = log2(CVP),
          log2_RDCU = log2(RDCU))
 
@@ -55,7 +55,7 @@ Codon_pair_usage <- Codon_pair_usage %>%
 #creating a heatmap#######################################################
 
 #extract relevant columns
-Codon_pair_usage_hm <- Codon_pair_usage[,c(1,2,5)]
+Codon_pair_usage_hm <- codon_pair_usage[,c(1,2,5)]
 
 #filter interesting pairs by log distance of RDCU 1
 top_pairs <- Codon_pair_usage_hm %>%

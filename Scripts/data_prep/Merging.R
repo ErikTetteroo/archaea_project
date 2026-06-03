@@ -1,101 +1,121 @@
-#load packages
+local({#load packages
 source("R/load_project.R")
 
-#Data prep#####################################################################
-#read in codon usage, trna data, and conversion table
-Coverage_table <- read.table("Data\\Coverage_table.csv", sep = ',',header = T)[,-1]
-Codon_usage <- read.table("Data\\Raw_data\\combined_codon_usage.csv", sep = ',', header = T)
-tRNA_dat <- read.table("Data\\Raw_data\\trnas_summary.csv", sep = ',',header = T)
-Taxa <- read.table("Data\\Raw_data\\lineages.tsv",sep = "\t", header = T)
-
-
-#Create consistent organism id
-trna <- tRNA_dat %>%
-  mutate(organism_id = str_extract(organism, "GCF_[0-9]+\\.[0-9]+"))
+#read in codon usage, trna data, coverage table, and taxonomy
+coverage_table <- read_csv("Data/coverage/coverage_table.csv")
+codon_usage <- read_csv("Data/Raw_data/combined_codon_usage.csv")
+trna_dat <- read_csv("Data/cleaned_data/trna_summary_c.csv")
+taxa <- read_tsv("Data/Raw_data/lineages.tsv")
 
 #Filter trna pseudo genes & low score genes unrecognized anticodons
-trna_filtered <- trna %>%
+trna_filtered <- trna_dat %>%
   filter(
     inf_score > 30,
     is.na(note) | !str_detect(note, "pseudo"),
     !str_detect(anticodon, "N")   
   )
 
-#Merge trna & codon usage by id
-codon_trna_pairs <- Codon_usage %>%
+# Merge trna & codon usage by organism
+
+codon_trna_pairs <- codon_usage %>%
   rename(organism_id = organism) %>%
   inner_join(trna_filtered, by = "organism_id")
 
-#Merge with coverage table by codon & anticodon
-codon_trna_pairs <- codon_trna_pairs %>%
-  inner_join(Coverage_table, by = c("codon", "anticodon"))
+# Ignore initiator Met tRNAs
 
-#Count pairing coverage each codon
+codon_trna_pairs <- codon_trna_pairs %>%
+  filter(tRNA_type != "iMet")
+
+# Merge with coverage table
+
+codon_trna_pairs <- codon_trna_pairs %>%
+  inner_join(
+    coverage_table,
+    by = c("codon", "anticodon")
+  )
+
+# Special handling for Ile2(CAU)
+
+codon_trna_pairs <- codon_trna_pairs %>%
+  mutate(
+    
+    pairing = case_when(
+      
+      # Ile2 specifically reads AUA after modification
+      tRNA_type == "Ile2" &
+        anticodon == "CAT" &
+        codon == "AUA"
+      ~ "M2",
+      
+      # prevent canonical AUG decoding by Ile2
+      tRNA_type == "Ile2" &
+        anticodon == "CAT" &
+        codon == "AUG"
+      ~ NA_character_,
+      
+      TRUE ~ pairing
+    )
+  )
+
 pairing_counts <- codon_trna_pairs %>%
-  filter(value != "0") %>%
-  mutate(pair_type = case_when(
-    value == "M"  ~ "M",
-    value == "GU" ~ "GUw",
-    value == "I"  ~ "Iw"
-  )) %>%
+  filter(!is.na(pairing)) %>%
+  mutate(
+    pair_type = case_when(
+      pairing == "M"  ~ "M",
+      pairing == "M2" ~ "M2",
+      pairing == "GU" ~ "GUw",
+      pairing == "SU" ~ "SUw"
+    )
+  ) %>%
   group_by(organism_id, codon, pair_type) %>%
   summarise(count = n(), .groups = "drop") %>%
-  tidyr::pivot_wider(
+  pivot_wider(
     names_from = pair_type,
     values_from = count,
     values_fill = 0
   )
 
-#add pairing counts to final dataset
-final_data <- Codon_usage %>%
+final_data <- codon_usage %>%
   rename(organism_id = organism) %>%
-  left_join(pairing_counts, by = c("organism_id", "codon")) %>%
+  left_join(pairing_counts,
+            by = c("organism_id", "codon")) %>%
   mutate(
     M   = coalesce(M, 0),
+    M2  = coalesce(M2, 0),
     GUw = coalesce(GUw, 0),
-    Iw  = coalesce(Iw, 0)
+    SUw = coalesce(SUw, 0)
   )
 
-#combine pairing counts in Coverage value
-GUweight <- 0.5
-Iweight <- 0.5
 final_data <- final_data %>%
   mutate(
-    CV = M + GUweight * GUw + Iweight * Iw
+    CM = case_when(
+      M   > 0 ~ "M",
+      M2  > 0 ~ "M2",
+      GUw > 0 ~ "GU",
+      SUw > 0 ~ "SU",
+      TRUE ~ NA_character_
+    )
+  )
+
+final_data <- final_data %>%
+  mutate(
+    CM = factor(
+      CM,
+      levels = c(NA, "SU", "GU","M2", "M")
+    )
+  )
+
+final_data <- final_data %>%
+  filter(
+    !(amino_acid == "TER" & is.na(CM))
   )
 
 #add taxonomy
-colnames(Taxa)[1] <- "organism_id"
-Taxac <- Taxa[,-3:-4]
+colnames(taxa)[1] <- "organism_id"
+taxac <- taxa[,-3:-4]
 
-final_data_t <- left_join(final_data, Taxac, by = "organism_id")
+final_data_t <- left_join(final_data, taxac, by = "organism_id")
 
-write.csv(final_data_t, "Data\\Merged_data_m.csv")
-
-###########################################################################
-
-#Extracting special cases
-selenocysteine_cases <- trna_filtered$organism_id[trna_filtered$tRNA_type=="SeC"]
-sup_cases <- trna_filtered$organism_id[trna_filtered$tRNA_type=="Sup"]
-inosine_cases <- final_data_t$organism_id[final_data_t$Iw>0]
-uau <- final_data_t[final_data_t$codon=='AUA',]
-uau_cases <- uau[uau$CV>0,]
-
-
-###########################################################################
-
-
-ggplot(final_data_t, aes(x = CV, y = RSCU)) +
-  geom_point(alpha = 0.5) +
-  geom_smooth(method = "lm", se = FALSE, color = "red") +
-  facet_wrap(~ amino_acid, scales = "free") +
-  theme_minimal() +
-  labs(
-    title = "RSCU vs Coverage per amino acid"
-  )
-
-cor_summary <- final_data %>%
-  group_by(amino_acid) %>%
-  summarise(cor = cor(CV, RSCU, use = "complete.obs"))
-
-cor_summary
+#export merged file
+write_csv(final_data_t, 
+          "Data/cleaned_data/merged_codon_usage_data.csv")})

@@ -1,3 +1,5 @@
+local({
+  
 #load project
 source("R/load_project.R")
 
@@ -98,8 +100,20 @@ df_long <- df_long %>%
     by = c("codon" = "codon_rna")
   )
 
-# create coverage plot
-create_alternative_coverage_plot(df_long)
+# create plot object
+p <- create_alternative_coverage_plot(
+  df_long,
+  codon_table
+)
+
+# save plot
+ggsave(
+  filename = "Plots/coverage_plot.png",
+  plot = p,
+  width = 12,
+  height = 10,
+  dpi = 300
+)
 
 # export table
 df_out <- df_long %>%
@@ -109,5 +123,7 @@ df_out <- df_long %>%
 
 write_csv(
   df_out,
-  file = "Data/coverage/coverage_table.csv"
+  file = "Data/cleaned_data/coverage_table.csv"
 )
+
+})
