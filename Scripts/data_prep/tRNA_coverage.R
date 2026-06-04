@@ -121,6 +121,15 @@ df_out <- df_long %>%
     anticodon = reverse_complement_format(anticodon)
   )
 
+df_out <- df_out %>%
+  mutate(
+    pairing = if_else(
+      anticodon == "CAT" & codon == "AUA" & is.na(pairing),
+      "M2",
+      pairing
+    )
+  )
+
 write_csv(
   df_out,
   file = "Data/cleaned_data/coverage_table.csv"

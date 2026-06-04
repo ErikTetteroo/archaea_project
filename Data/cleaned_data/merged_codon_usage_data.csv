@@ -5934,7 +5934,7 @@ GCF_000246985.2,UUG,Leu,U,U,G,1,673196,9860,0.85,0.44,1,1,0,0,M,Thermococcus lit
 GCF_000246985.2,CUU,Leu,C,U,U,0,673196,18716,1.61,0.44,0,1,1,0,GU,Thermococcus litoralis DSM 5473,Methanobacteriota,Thermococci,Thermococcales,Thermococcaceae,Thermococcus,Thermococcus litoralis
 GCF_000246985.2,CUC,Leu,C,U,C,1,673196,15885,1.36,0.44,1,0,1,0,M,Thermococcus litoralis DSM 5473,Methanobacteriota,Thermococci,Thermococcales,Thermococcaceae,Thermococcus,Thermococcus litoralis
 GCF_000246985.2,CUA,Leu,C,U,A,0,673196,7537,0.65,0.44,1,0,0,0,M,Thermococcus litoralis DSM 5473,Methanobacteriota,Thermococci,Thermococcales,Thermococcaceae,Thermococcus,Thermococcus litoralis
-GCF_000246985.2,CUG,Leu,C,U,G,1,673196,8102,0.7,0.44,0,1,0,0,GU,Thermococcus litoralis DSM 5473,Methanobacteriota,Thermococci,Thermococcales,Thermococcaceae,Thermococcus,Thermococcus litoralis
+GCF_000246985.2,CUG,Leu,C,U,G,1,673196,8102,0.7,0.44,1,1,0,0,M,Thermococcus litoralis DSM 5473,Methanobacteriota,Thermococci,Thermococcales,Thermococcaceae,Thermococcus,Thermococcus litoralis
 GCF_000246985.2,AUU,Ile,A,U,U,0,673196,17438,0.97,0.44,0,1,0,0,GU,Thermococcus litoralis DSM 5473,Methanobacteriota,Thermococci,Thermococcales,Thermococcaceae,Thermococcus,Thermococcus litoralis
 GCF_000246985.2,AUC,Ile,A,U,C,1,673196,11515,0.64,0.44,1,0,0,0,M,Thermococcus litoralis DSM 5473,Methanobacteriota,Thermococci,Thermococcales,Thermococcaceae,Thermococcus,Thermococcus litoralis
 GCF_000246985.2,AUA,Ile,A,U,A,0,673196,25038,1.39,0.44,0,0,0,1,M2,Thermococcus litoralis DSM 5473,Methanobacteriota,Thermococci,Thermococcales,Thermococcaceae,Thermococcus,Thermococcus litoralis
@@ -5949,8 +5949,8 @@ GCF_000246985.2,UCA,Ser,U,C,A,0,673196,6294,1.11,0.44,1,0,0,0,M,Thermococcus lit
 GCF_000246985.2,UCG,Ser,U,C,G,1,673196,2413,0.43,0.44,1,1,0,0,M,Thermococcus litoralis DSM 5473,Methanobacteriota,Thermococci,Thermococcales,Thermococcaceae,Thermococcus,Thermococcus litoralis
 GCF_000246985.2,AGU,Ser,A,G,U,0,673196,5664,1,0.44,0,1,0,0,GU,Thermococcus litoralis DSM 5473,Methanobacteriota,Thermococci,Thermococcales,Thermococcaceae,Thermococcus,Thermococcus litoralis
 GCF_000246985.2,AGC,Ser,A,G,C,1,673196,9593,1.7,0.44,1,0,0,0,M,Thermococcus litoralis DSM 5473,Methanobacteriota,Thermococci,Thermococcales,Thermococcaceae,Thermococcus,Thermococcus litoralis
-GCF_000246985.2,CCU,Pro,C,C,U,0,673196,5988,0.86,0.44,0,0,1,0,SU,Thermococcus litoralis DSM 5473,Methanobacteriota,Thermococci,Thermococcales,Thermococcaceae,Thermococcus,Thermococcus litoralis
-GCF_000246985.2,CCC,Pro,C,C,C,1,673196,6746,0.97,0.44,0,0,1,0,SU,Thermococcus litoralis DSM 5473,Methanobacteriota,Thermococci,Thermococcales,Thermococcaceae,Thermococcus,Thermococcus litoralis
+GCF_000246985.2,CCU,Pro,C,C,U,0,673196,5988,0.86,0.44,0,1,1,0,GU,Thermococcus litoralis DSM 5473,Methanobacteriota,Thermococci,Thermococcales,Thermococcaceae,Thermococcus,Thermococcus litoralis
+GCF_000246985.2,CCC,Pro,C,C,C,1,673196,6746,0.97,0.44,1,0,1,0,M,Thermococcus litoralis DSM 5473,Methanobacteriota,Thermococci,Thermococcales,Thermococcaceae,Thermococcus,Thermococcus litoralis
 GCF_000246985.2,CCA,Pro,C,C,A,0,673196,10306,1.48,0.44,1,0,0,0,M,Thermococcus litoralis DSM 5473,Methanobacteriota,Thermococci,Thermococcales,Thermococcaceae,Thermococcus,Thermococcus litoralis
 GCF_000246985.2,CCG,Pro,C,C,G,1,673196,4843,0.69,0.44,1,1,0,0,M,Thermococcus litoralis DSM 5473,Methanobacteriota,Thermococci,Thermococcales,Thermococcaceae,Thermococcus,Thermococcus litoralis
 GCF_000246985.2,ACU,Thr,A,C,U,0,673196,7785,1.05,0.44,0,1,1,0,GU,Thermococcus litoralis DSM 5473,Methanobacteriota,Thermococci,Thermococcales,Thermococcaceae,Thermococcus,Thermococcus litoralis
@@ -5966,7 +5966,7 @@ GCF_000246985.2,UAC,Tyr,U,A,C,1,673196,13961,1.05,0.44,1,0,0,0,M,Thermococcus li
 GCF_000246985.2,CAU,His,C,A,U,0,673196,4703,0.88,0.44,0,1,0,0,GU,Thermococcus litoralis DSM 5473,Methanobacteriota,Thermococci,Thermococcales,Thermococcaceae,Thermococcus,Thermococcus litoralis
 GCF_000246985.2,CAC,His,C,A,C,1,673196,6003,1.12,0.44,1,0,0,0,M,Thermococcus litoralis DSM 5473,Methanobacteriota,Thermococci,Thermococcales,Thermococcaceae,Thermococcus,Thermococcus litoralis
 GCF_000246985.2,CAA,Gln,C,A,A,0,673196,6294,0.97,0.44,1,0,0,0,M,Thermococcus litoralis DSM 5473,Methanobacteriota,Thermococci,Thermococcales,Thermococcaceae,Thermococcus,Thermococcus litoralis
-GCF_000246985.2,CAG,Gln,C,A,G,1,673196,6706,1.03,0.44,0,1,0,0,GU,Thermococcus litoralis DSM 5473,Methanobacteriota,Thermococci,Thermococcales,Thermococcaceae,Thermococcus,Thermococcus litoralis
+GCF_000246985.2,CAG,Gln,C,A,G,1,673196,6706,1.03,0.44,1,1,0,0,M,Thermococcus litoralis DSM 5473,Methanobacteriota,Thermococci,Thermococcales,Thermococcaceae,Thermococcus,Thermococcus litoralis
 GCF_000246985.2,AAU,Asn,A,A,U,0,673196,9356,0.8,0.44,0,1,0,0,GU,Thermococcus litoralis DSM 5473,Methanobacteriota,Thermococci,Thermococcales,Thermococcaceae,Thermococcus,Thermococcus litoralis
 GCF_000246985.2,AAC,Asn,A,A,C,1,673196,13985,1.2,0.44,1,0,0,0,M,Thermococcus litoralis DSM 5473,Methanobacteriota,Thermococci,Thermococcales,Thermococcaceae,Thermococcus,Thermococcus litoralis
 GCF_000246985.2,AAA,Lys,A,A,A,0,673196,27134,1,0.44,1,0,0,0,M,Thermococcus litoralis DSM 5473,Methanobacteriota,Thermococci,Thermococcales,Thermococcaceae,Thermococcus,Thermococcus litoralis

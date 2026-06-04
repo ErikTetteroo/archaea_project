@@ -20,3 +20,7 @@ reverse_seq <- function(seq) {
 reverse_complement_format <- function(x) {
   rna_to_dna(reverse_seq(x))
 }
+
+trnascan_to_anticodon <- function(x) {
+  dna_to_rna(reverse_seq(x))
+}

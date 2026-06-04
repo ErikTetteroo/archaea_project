@@ -1,8 +1,10 @@
-local({#load packages
+local({
+  
+#load packages
 source("R/load_project.R")
 
 #read in codon usage, trna data, coverage table, and taxonomy
-coverage_table <- read_csv("Data/coverage/coverage_table.csv")
+coverage_table <- read_csv("Data/cleaned_data/coverage_table.csv")
 codon_usage <- read_csv("Data/Raw_data/combined_codon_usage.csv")
 trna_dat <- read_csv("Data/cleaned_data/trna_summary_c.csv")
 taxa <- read_tsv("Data/Raw_data/lineages.tsv")
@@ -118,4 +120,5 @@ final_data_t <- left_join(final_data, taxac, by = "organism_id")
 
 #export merged file
 write_csv(final_data_t, 
-          "Data/cleaned_data/merged_codon_usage_data.csv")})
+          "Data/cleaned_data/merged_codon_usage_data.csv")
+})

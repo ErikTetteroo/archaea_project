@@ -99,4 +99,29 @@ trna_updated <- bind_rows(
   manuscript_as_trna
 )
 
+# ----------------------------------------
+# correct manually identified trna mismatches
+# ----------------------------------------
+manual_trna_fixes <- tibble::tribble(
+  ~organism_id,         ~old_type, ~old_anticodon, ~new_type, ~new_anticodon,
+  "GCF_000246985.2",   "Pro",     "NGG",          "Pro",     "GGG",
+  "GCF_000246985.2",   "Undet",   "NTG",          "Gln",     "CTG",
+  "GCF_000246985.2",   "Leu",     "NAG",          "Leu",     "CAG"
+)
+
+trna_updated <- trna_updated %>%
+  left_join(
+    manual_trna_fixes,
+    by = c(
+      "organism_id",
+      "tRNA_type" = "old_type",
+      "anticodon" = "old_anticodon"
+    )
+  ) %>%
+  mutate(
+    tRNA_type = coalesce(new_type, tRNA_type),
+    anticodon = coalesce(new_anticodon, anticodon)
+  ) %>%
+  select(-new_type, -new_anticodon)
+
 write_csv(trna_updated,"Data/cleaned_data/trna_summary_c.csv")})

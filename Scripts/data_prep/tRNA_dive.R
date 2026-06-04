@@ -1,3 +1,5 @@
+local({
+
 source("R/load_project.R")
 
 #load in data
@@ -21,21 +23,11 @@ trna_low_quality <- trna %>%
 
 trna_clean <- trna_filtered[,c(6,2,3)]
 
-#How many trnas does each organism contain total
-total_trna_per_org <- trna_clean %>%
-  group_by(organism_id) %>%
-  summarise(total_trna = n(), .groups = "drop")
-
 #How many unique trnas does each organism contain
 unique_trna_per_org <- trna_clean %>%
   distinct(organism_id, tRNA_type, anticodon) %>%
   group_by(organism_id) %>%
   summarise(unique_trna = n(), .groups = "drop")
-
-#Combine metrics
-summary_table <- total_trna_per_org %>%
-  left_join(unique_trna_per_org, by = "organism_id")
-
 
 #count how often each trna type is present in each organism
 trna_combo_counts <- trna_clean %>%
@@ -45,7 +37,7 @@ trna_combo_counts <- trna_clean %>%
   arrange(desc(n_organisms))
 
 
-#find out which organisms have rare combos or are missing common combos
+#find out which organisms have rare combos 
 trna_presence <- trna_clean %>%
   distinct(organism_id, tRNA_type, anticodon)
 
@@ -56,6 +48,7 @@ rare_combo_organisms <- rare_combos %>%
   inner_join(trna_presence, by = c("tRNA_type", "anticodon")) %>%
   arrange(tRNA_type, anticodon)
 
+# or are missing common combos
 common_combos <- trna_combo_counts %>%
   filter(n_organisms >= 500)
 
@@ -79,5 +72,7 @@ missing_summary <- missing_common_combos %>%
   summarise(missing_organisms = list(organism_id), .groups = "drop")
 
 #save a copy of both
-write_csv(missing_common_combos,"Data\\missing_common_combos_u.csv")
-write_csv(rare_combo_organisms,"Data\\present_rare_combos_u.csv")
+write_csv(missing_common_combos,"Data/manuscript/missing_common_trnas.csv")
+write_csv(rare_combo_organisms,"Data/manuscript/rare_trnas.csv")
+
+})

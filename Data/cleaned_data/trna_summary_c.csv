@@ -444,7 +444,7 @@ GCF_000246985.2_Thermococcus_litoralis_DSM_5473,Arg,GCG,99,,GCF_000246985.2,trna
 GCF_000246985.2_Thermococcus_litoralis_DSM_5473,Leu,TAA,95.4,,GCF_000246985.2,trnascan
 GCF_000246985.2_Thermococcus_litoralis_DSM_5473,Asn,GTT,90.7,,GCF_000246985.2,trnascan
 GCF_000246985.2_Thermococcus_litoralis_DSM_5473,Ile2,CAT,101.3,,GCF_000246985.2,trnascan
-GCF_000246985.2_Thermococcus_litoralis_DSM_5473,Leu,NAG,93.6,,GCF_000246985.2,trnascan
+GCF_000246985.2_Thermococcus_litoralis_DSM_5473,Leu,CAG,93.6,,GCF_000246985.2,trnascan
 GCF_000246985.2_Thermococcus_litoralis_DSM_5473,Pro,CGG,93,,GCF_000246985.2,trnascan
 GCF_000246985.2_Thermococcus_litoralis_DSM_5473,Ser,CGA,94.5,,GCF_000246985.2,trnascan
 GCF_000246985.2_Thermococcus_litoralis_DSM_5473,Asp,GTC,89.5,,GCF_000246985.2,trnascan
@@ -468,12 +468,12 @@ GCF_000246985.2_Thermococcus_litoralis_DSM_5473,Trp,CCA,82.5,,GCF_000246985.2,tr
 GCF_000246985.2_Thermococcus_litoralis_DSM_5473,iMet,CAT,89.6,,GCF_000246985.2,trnascan
 GCF_000246985.2_Thermococcus_litoralis_DSM_5473,Glu,CTC,99.2,,GCF_000246985.2,trnascan
 GCF_000246985.2_Thermococcus_litoralis_DSM_5473,Ile,GAT,100.9,,GCF_000246985.2,trnascan
-GCF_000246985.2_Thermococcus_litoralis_DSM_5473,Undet,NTG,88.4,,GCF_000246985.2,trnascan
+GCF_000246985.2_Thermococcus_litoralis_DSM_5473,Gln,CTG,88.4,,GCF_000246985.2,trnascan
 GCF_000246985.2_Thermococcus_litoralis_DSM_5473,Tyr,GTA,91.8,,GCF_000246985.2,trnascan
 GCF_000246985.2_Thermococcus_litoralis_DSM_5473,Ala,TGC,102.2,,GCF_000246985.2,trnascan
 GCF_000246985.2_Thermococcus_litoralis_DSM_5473,Ser,TGA,92.1,,GCF_000246985.2,trnascan
 GCF_000246985.2_Thermococcus_litoralis_DSM_5473,Leu,TAG,91.3,,GCF_000246985.2,trnascan
-GCF_000246985.2_Thermococcus_litoralis_DSM_5473,Pro,NGG,91.4,,GCF_000246985.2,trnascan
+GCF_000246985.2_Thermococcus_litoralis_DSM_5473,Pro,GGG,91.4,,GCF_000246985.2,trnascan
 GCF_000246985.2_Thermococcus_litoralis_DSM_5473,Gly,TCC,98.8,,GCF_000246985.2,trnascan
 GCF_000246985.2_Thermococcus_litoralis_DSM_5473,Arg,TCG,89.6,,GCF_000246985.2,trnascan
 GCF_000246985.2_Thermococcus_litoralis_DSM_5473,Thr,TGT,101,,GCF_000246985.2,trnascan

@@ -26,6 +26,8 @@ source("Scripts/data_prep/Merging.R")
 #-------
 
 #tRNA_dive.R
+# Step 1: check/count rare trnas and missing common trnas
+source("Scripts/data_prep/tRNA_dive.R")
 
 #tRNA_coverage_of_standard_set.R
 
