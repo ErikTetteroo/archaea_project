@@ -1,10 +1,10 @@
+#load project
 source("R/load_project.R")
 
-standard_set_coverage_table <- read_csv("Data/standard_set_coverage_table.csv")
-missing_common_combos <- read_csv("Data/missing_common_combos_u.csv")
-present_rare_combos <- read_csv("Data/present_rare_combos_u.csv")
-coverage_table <- read_csv("Data/Coverage_table.csv")
-coverage_table <- coverage_table[,-1]
+standard_set_coverage_table <- read_csv("Data/manuscript/standard_set_coverage_table.csv")
+missing_common_combos <- read_csv("Data/manuscript/missing_common_trnas.csv")
+present_rare_combos <- read_csv("Data/manuscript/rare_trnas.csv")
+coverage_table <- read_csv("Data/cleaned_data/coverage_table.csv")
 
 missing_df <- missing_common_combos %>%
   mutate(
@@ -23,6 +23,9 @@ trna_changes <- bind_rows(
   present_df
 )
 
+trna_changes <- trna_changes %>%
+  filter(tRNA_type != "iMet")
+
 aa_states <- trna_changes %>%
   mutate(
     event = paste0(
@@ -36,25 +39,25 @@ aa_states <- trna_changes %>%
     .groups = "drop"
   )
 
-aa_state_counts <- aa_states %>%
+aa_state_counts2 <- aa_states %>%
   count(tRNA_type, aa_signature, sort = TRUE)
 
-#organism_states <- trna_changes %>%
-#  mutate(
-#    event = paste0(
-#      ifelse(change_type == "loss", "-", "+"),
-#      tRNA_type, "_",
-#      anticodon
-#    )
-#  ) %>%
-#  group_by(organism_id) %>%
-#  summarise(
-#    state_signature = paste(sort(event), collapse = ";"),
-#    .groups = "drop"
-#  )
-#
-#state_counts <- organism_states %>%
-#  count(state_signature, sort = TRUE)
+organism_states <- trna_changes %>%
+  mutate(
+    event = paste0(
+      ifelse(change_type == "loss", "-", "+"),
+     tRNA_type, "_",
+      anticodon
+    )
+  ) %>%
+  group_by(organism_id) %>%
+  summarise(
+    state_signature = paste(sort(event), collapse = ";"),
+    .groups = "drop"
+  )
+
+state_counts <- organism_states %>%
+  count(state_signature, sort = TRUE)
 
 
 coverage_effects <- trna_changes %>%
@@ -62,26 +65,34 @@ coverage_effects <- trna_changes %>%
     coverage_table,
     by = "anticodon"
   ) %>%
-  filter(value != "0")
+  filter(!is.na(pairing))
 
 coverage_effects <- coverage_effects %>%
   mutate(
     delta = case_when(
-      value == "M"  & change_type == "gain" ~  1,
-      value == "M"  & change_type == "loss" ~ -1,
-      value == "GU" & change_type == "gain" ~  0.5,
-      value == "GU" & change_type == "loss" ~ -0.5
+      pairing == "M"  & change_type == "gain" ~  1,
+      pairing == "M"  & change_type == "loss" ~ -1,
+      pairing == "GU" & change_type == "gain" ~  1,
+      pairing == "GU" & change_type == "loss" ~ -1,
+      pairing == "SU" & change_type == "gain" ~  1,
+      pairing == "SU" & change_type == "loss" ~ -1,
+      pairing == "M2" & change_type == "gain" ~  1,
+      pairing == "M2" & change_type == "loss" ~ -1,
+      
     )
   )
 
 codon_delta_profiles <- coverage_effects %>%
   group_by(organism_id, tRNA_type, codon) %>%
   summarise(
-    delta_M = sum(delta[value == "M"], na.rm = TRUE),
-    delta_GUw = sum(delta[value == "GU"], na.rm = TRUE),
-    delta_CV = sum(delta),
+    delta_M = sum(delta[pairing == "M"], na.rm = TRUE),
+    delta_GUw = sum(delta[pairing == "GU"], na.rm = TRUE),
+    delta_SUw = sum(delta[pairing == "SU"], na.rm = TRUE),
+    delta_M2 = sum(delta[pairing == "M2"], na.rm = TRUE),
     .groups = "drop"
   )
+
+
 
 aa_delta_state_counts <- codon_delta_profiles %>%
   group_by(
@@ -89,7 +100,8 @@ aa_delta_state_counts <- codon_delta_profiles %>%
     codon,
     delta_M,
     delta_GUw,
-    delta_CV
+    delta_SUw,
+    delta_M2
   ) %>%
   summarise(
     n = n_distinct(organism_id),
@@ -107,7 +119,8 @@ aa_delta_states <- codon_delta_profiles %>%
       "(",
       delta_M, ",",
       delta_GUw, ",",
-      delta_CV,
+      delta_SUw, ",",
+      delta_M2,
       ")"
     )
   ) %>%

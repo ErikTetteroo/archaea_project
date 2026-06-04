@@ -1,3 +1,5 @@
+local({
+
 #load project
 source("R/load_project.R")
 
@@ -31,10 +33,6 @@ standard_sets_filtered <- standard_set_ids %>%
     is.na(note) | !str_detect(note, "pseudo"),
     !str_detect(anticodon, "N")   
   )
-
-
-#sort(unique(missing_common_combos$tRNA_type))==sort(unique(standard_sets_filtered$tRNA_type))
-#sort(unique(present_rare_combos$tRNA_type))
 
 # pick one organism with standard set
 standard_id <- standard_sets_filtered %>%
@@ -125,5 +123,26 @@ standard_set_coverage_table <- pairing_counts %>%
     )
   )
 
+source("R/plot_functions/coverage_plot_alternative.R")
+
+codon_table <- give_codon_table()
+
+p <- create_alternative_coverage_plot(standard_set_coverage_table,
+                                      codon_table,
+                                      coverage_table,
+                                      title = "codon coverage of the standard set"
+)
+
+# save plot
+ggsave(
+  filename = "Plots/coverage_plot_standard_set.png",
+  plot = p,
+  width = 12,
+  height = 10,
+  dpi = 300
+)
+
 standard_set_coverage_table <- standard_set_coverage_table[,-1]
 write_csv(standard_set_coverage_table,"Data/manuscript/standard_set_coverage_table.csv")
+
+})

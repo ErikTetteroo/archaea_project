@@ -29,6 +29,12 @@ source("Scripts/data_prep/Merging.R")
 # Step 1: check/count rare trnas and missing common trnas
 source("Scripts/data_prep/tRNA_dive.R")
 
-#tRNA_coverage_of_standard_set.R
+# Step 2: see what the coverage is of the 46 tRNA standard set of archaea
+source("Scripts/data_prep/tRNA_coverage_of_standard_set.R")
 
 #deviations_of_standard_set.R
+
+#-------
+# codon pairs
+#-------
+

@@ -17,7 +17,7 @@ create_alternative_coverage_plot <- function(
     # already long format
     df_long <- data
     
-    active_anticodons <- unique(df_long$anticodon)
+    #active_anticodons <- unique(df_long$anticodon)
     
   } else if (all(c("codon", "CM") %in% colnames(data))) {
     
@@ -67,10 +67,10 @@ create_alternative_coverage_plot <- function(
     
     df_long$anticodon <- trnascan_to_anticodon(df_long$anticodon)
     
-    active_anticodons <- df_long %>%
-      filter(!is.na(pairing)) %>%
-      pull(anticodon) %>%
-      unique()
+    #active_anticodons <- df_long %>%
+    #  filter(!is.na(pairing)) %>%
+    #  pull(anticodon) %>%
+    #  unique()
     
   } else {
     
@@ -127,27 +127,26 @@ create_alternative_coverage_plot <- function(
     )
   
   ###########################################################################
-  # AA BOUNDARIES
   
-  aa_boundaries <- codon_table %>%
-    distinct(codon_rna, aa) %>%
-    mutate(
-      codon_rna = factor(codon_rna, levels = rev(codons))
-    ) %>%
-    arrange(codon_rna) %>%
-    mutate(position = row_number()) %>%
-    group_by(aa) %>%
-    summarise(
-      start = min(position),
-      end = max(position),
-      middle = mean(c(start, end)),
-      .groups = "drop"
-    )
+    aa_boundaries <- codon_table %>%
+      distinct(codon_rna, aa) %>%
+      mutate(
+        codon_rna = factor(codon_rna, levels = rev(codons))
+      ) %>%
+      arrange(codon_rna) %>%
+      mutate(position = row_number()) %>%
+      group_by(aa) %>%
+      summarise(
+        start = min(position),
+        end = max(position),
+        middle = mean(c(start, end)),
+        .groups = "drop"
+      )
   
   ###########################################################################
   # PLOTTING
   
-  ggplot(
+  p <- ggplot(
     df_long,
     aes(
       x = anticodon,
@@ -155,32 +154,11 @@ create_alternative_coverage_plot <- function(
     )
   ) +
     
-    # grey background for absent anticodons
     geom_tile(color = "grey90") +
     
-    # actual pairings
     geom_tile(
       aes(fill = pairing),
       color = "grey90"
-    ) +
-    
-    geom_hline(
-      data = aa_boundaries,
-      aes(yintercept = end + 0.5),
-      inherit.aes = FALSE,
-      linewidth = 0.4
-    ) +
-    
-    geom_text(
-      data = aa_boundaries,
-      aes(
-        x = 1,
-        y = middle,
-        label = aa
-      ),
-      inherit.aes = FALSE,
-      hjust = 1,
-      size = 3
     ) +
     
     scale_fill_manual(
@@ -204,13 +182,7 @@ create_alternative_coverage_plot <- function(
       axis.text.x = element_text(
         angle = 90,
         vjust = 0.5,
-        size = 6,
-        
-#        color = ifelse(
-#          anticodons %in% active_anticodons,
-#          "black",
-#          "grey70"
-#        )
+        size = 6
       ),
       
       axis.text.y = element_text(size = 6),
@@ -230,9 +202,27 @@ create_alternative_coverage_plot <- function(
     ) +
     
     ggtitle(title)
+  
+  if (is.null(aa_subset)) {
+    p <- p +
+      geom_hline(
+        data = aa_boundaries,
+        aes(yintercept = end + 0.5),
+        inherit.aes = FALSE,
+        linewidth = 0.4
+      ) +
+      geom_text(
+        data = aa_boundaries,
+        aes(
+          x = 1,
+          y = middle,
+          label = aa
+        ),
+        inherit.aes = FALSE,
+        hjust = 1,
+        size = 3
+      )
+  }
+  
+  p
 }
-
-create_alternative_coverage_plot(standard_set_coverage_table,
-                                 codon_table,
-                                 coverage_table)
-

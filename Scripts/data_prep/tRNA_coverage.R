@@ -100,11 +100,11 @@ df_long <- df_long %>%
     by = c("codon" = "codon_rna")
   )
 
-# create plot object
-p <- create_alternative_coverage_plot(
-  df_long,
-  codon_table
-)
+source("R/plot_functions/coverage_plot_alternative.R")
+
+p <- create_alternative_coverage_plot(df_long,
+                                 codon_table
+                                 )
 
 # save plot
 ggsave(
