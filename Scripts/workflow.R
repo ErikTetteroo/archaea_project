@@ -33,6 +33,7 @@ source("Scripts/data_prep/tRNA_dive.R")
 source("Scripts/data_prep/tRNA_coverage_of_standard_set.R")
 
 #deviations_of_standard_set.R
+source("Scripts/data_prep/deviations_of_standard_set.R")
 
 #-------
 # codon pairs

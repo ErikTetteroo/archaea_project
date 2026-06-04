@@ -10,33 +10,55 @@ merged <- merged %>%
   mutate(codon = gsub("U", "T", codon))
 
 #create lookup table
-cv_lookup <- merged %>%
-  select(organism_id, codon, CV)
+cm_lookup <- merged %>%
+  select(organism_id, codon, CM)
 
 #add coverage value codon 1
 codon_pair_usage <- codon_pair_usage %>%
   left_join(
-    cv_lookup,
+    cm_lookup,
     by = c("organism" = "organism_id", "c1" = "codon")
   ) %>%
-  rename(CV1 = CV)
+  rename(CM1 = CM)
 
 #add coverage value codon 2
 codon_pair_usage <- codon_pair_usage %>%
   left_join(
-    cv_lookup,
+    cm_lookup,
     by = c("organism" = "organism_id", "c2" = "codon")
   ) %>%
-  rename(CV2 = CV)
+  rename(CM2 = CM)
 
 #combine coverage values (currently multiplied)
 codon_pair_usage <- codon_pair_usage %>%
-  mutate(CVP = CV1 * CV2)
+  mutate(CMP = paste0(CM1,"_X_",CM2))
+
+unique(codon_pair_usage$CMP)
+
+summary(codon_pair_usage$RDCU)
 
 #take log of both
 codon_pair_usage <- codon_pair_usage %>%
-  mutate(log2_CVP = log2(CVP),
-         log2_RDCU = log2(RDCU))
+  mutate(log2_RDCU = log2(RDCU))
+
+codon_pair_usage$RDCU
+
+order <- sort(table(codon_pair_usage$CMP), decreasing = TRUE)
+
+labs <- paste0(names(order), " (n=", order, ")")
+names(labs) <- names(order)
+
+ggplot(
+  codon_pair_usage,
+  aes(
+    x = factor(CMP, levels = names(order)),
+    y = log2_RDCU
+  )
+) +
+  geom_boxplot() +
+  scale_x_discrete(labels = labs) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 #plot RDCU vs coverage value (Takes long and is not very insightful atm)
 #ggplot(Codon_pair_usage, aes(x = log2_CVP, y = log2_RDCU)) +
