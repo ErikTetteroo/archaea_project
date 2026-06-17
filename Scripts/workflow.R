@@ -29,20 +29,20 @@ source("Scripts/data_prep/Merging.R")
 #-------------------------------------------------------------------------------
 
 #tRNA_dive.R
-# Step 1: check/count rare trnas and missing common trnas
+# step 1: check/count rare trnas and missing common trnas
 source("Scripts/data_prep/tRNA_dive.R")
 
-# Step 2: see what the coverage is of the 46 tRNA standard set of archaea
+# step 2: see what the coverage is of the 46 tRNA standard set of archaea
 source("Scripts/data_prep/tRNA_coverage_of_standard_set.R")
 
-# Step 3: map out the deviations from the standard set for organisms
+# step 3: map out the deviations from the standard set for organisms
 source("Scripts/data_prep/deviations_of_standard_set.R")
 
-# Step 4: plot the codon coverage of these deviated trna pools to illustrate 
+# step 4: plot the codon coverage of these deviated trna pools to illustrate 
 #         impossibilities (codons with no coverage at all)
 source("Scripts/creating_plots/coverage_plot_deviations.R")
 
-# Step 5: compare coverage of this deviation approach with earlier merge attempt
+# step 5: compare coverage of this deviation approach with earlier merge attempt
 source("Scripts/data_prep/deviation_vs_direct_validation.R")
 
 #-------------------------------------------------------------------------------
