@@ -29,4 +29,4 @@ source("R/coverage/matching.R")
 # Load plot functions
 #------------------------------
 
-source("R/plot_functions/alternative_coverage_plot.R")
+source("R/plot_functions/coverage_plot_alternative.R")

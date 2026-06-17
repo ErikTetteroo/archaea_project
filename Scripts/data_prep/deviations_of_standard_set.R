@@ -113,6 +113,8 @@ aa_delta_state_counts <- aa_delta_states %>%
   ) %>%
   arrange(desc(n))
 
+# output
 write_csv(aa_delta_state_counts,"Data/manuscript/aa_deviating_state_counts.csv")
 write_csv(aa_delta_states,"Data/manuscript/aa_deviating_state_id_lookup.csv")
-write_csv(organism_state_counts,"Data/manuscript/org_deviating_state_id_lookup.csv")})
+write_csv(organism_state_counts,"Data/manuscript/org_deviating_state_counts.csv")
+})

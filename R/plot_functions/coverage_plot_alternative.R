@@ -1,3 +1,51 @@
+apply_deviation <- function(coverage_table, aa_signature) {
+  
+  updates <- str_split(aa_signature, ";")[[1]]
+  
+  for (u in updates) {
+    
+    codon <- str_match(u, "^([ACGU]{3})\\(")[,2]
+    
+    deltas <- str_match(u, "\\(([^)]*)\\)")[,2] |>
+      str_split(",") |>
+      unlist() |>
+      as.numeric()
+    
+    cols <- c("M", "GUw", "SUw", "M2")
+    
+    idx <- coverage_table$codon == codon
+    
+    if (!any(idx)) next  # safety, but now should never trigger
+    
+    coverage_table[idx, cols] <-
+      coverage_table[idx, cols] +
+      matrix(deltas, nrow = sum(idx), ncol = 4, byrow = TRUE)
+  }
+  
+  coverage_table %>%
+    mutate(
+      CM = case_when(
+        M  > 0 ~ "M",
+        M2 > 0 ~ "M2",
+        GUw > 0 ~ "GU",
+        SUw > 0 ~ "SU",
+        TRUE ~ NA_character_
+      )
+    )
+}
+
+reconstruct_coverage <- function(standard_coverage,
+                                 organism_deviations) {
+  
+  coverage <- standard_coverage
+  
+  for (sig in organism_deviations$aa_signature) {
+    coverage <- apply_deviation(coverage, sig)
+  }
+  
+  coverage
+}
+
 create_alternative_coverage_plot <- function(
     data,
     codon_table,

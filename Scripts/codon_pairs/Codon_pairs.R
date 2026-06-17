@@ -6,8 +6,7 @@ codon_pair_usage <- read_csv("Data/Raw_data/combined_codon_pair_usage.csv")
 merged <- read_csv("Data/cleaned_data/merged_codon_usage_data.csv")
 
 #standardize codon format
-merged <- merged %>%
-  mutate(codon = gsub("U", "T", codon))
+merged$codon <- rna_to_dna(merged$codon)
 
 #create lookup table
 cm_lookup <- merged %>%
@@ -33,15 +32,9 @@ codon_pair_usage <- codon_pair_usage %>%
 codon_pair_usage <- codon_pair_usage %>%
   mutate(CMP = paste0(CM1,"_X_",CM2))
 
-unique(codon_pair_usage$CMP)
-
-summary(codon_pair_usage$RDCU)
-
-#take log of both
+#take the log of RDCU
 codon_pair_usage <- codon_pair_usage %>%
   mutate(log2_RDCU = log2(RDCU))
-
-codon_pair_usage$RDCU
 
 order <- sort(table(codon_pair_usage$CMP), decreasing = TRUE)
 
@@ -59,18 +52,6 @@ ggplot(
   scale_x_discrete(labels = labs) +
   theme_bw() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-#plot RDCU vs coverage value (Takes long and is not very insightful atm)
-#ggplot(Codon_pair_usage, aes(x = log2_CVP, y = log2_RDCU)) +
-#  geom_point(alpha = 0.1, size = 0.5) +
-#  theme_minimal() +
-#  labs(
-#    title = "Relationship between codon pair coverage and RDCU",
-#    x = "log2(CVP)",
-#    y = "log2(RDCU)"
-#  )
-
-#many 0's in coverage value stop further analysis atm
 
 
 

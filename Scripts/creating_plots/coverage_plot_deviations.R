@@ -1,64 +1,22 @@
 # Archaeal tRNA Coverage Plotting Functions
 source("R/load_project.R")
-source("R/coverage_plot_function.R")
 
-standard_set_coverage_table <- read_csv("Data/standard_set_coverage_table.csv")
-deviating_aa_sets <- read.csv("Data/aa_deviating_state_counts_u_p.csv")
+standard_set_coverage_table <- read_csv("Data/manuscript/standard_set_coverage_table.csv")
+deviating_aa_sets <- read_csv("Data/manuscript/aa_deviating_state_counts.csv")
+coverage_table <- read_csv("Data/cleaned_data/coverage_table.csv")
+codon_table <- give_codon_table()
 
-# =========================================================
-# USER INPUTS
-# =========================================================
-
-GUweight <- 0.5
-#deviation_row <- deviating_aa_sets[1,]
-deviating_aa_sets <- deviating_aa_sets[deviating_aa_sets$impossible==0,]
-
-# =========================================================
-# CODON ORDER
-# =========================================================
-
-codon_order <- list(
-  Phe = c("TTT","TTC"),
-  Leu = c("TTA","TTG","CTT","CTC","CTA","CTG"),
-  Ile = c("ATT","ATC","ATA"),
-  Met = c("ATG"),
-  Val = c("GTT","GTC","GTA","GTG"),
-  Ser = c("TCT","TCC","TCA","TCG","AGT","AGC"),
-  Pro = c("CCT","CCC","CCA","CCG"),
-  Thr = c("ACT","ACC","ACA","ACG"),
-  Ala = c("GCT","GCC","GCA","GCG"),
-  Tyr = c("TAT","TAC"),
-  His = c("CAT","CAC"),
-  Gln = c("CAA","CAG"),
-  Asn = c("AAT","AAC"),
-  Lys = c("AAA","AAG"),
-  Asp = c("GAT","GAC"),
-  Glu = c("GAA","GAG"),
-  Cys = c("TGT","TGC"),
-  Trp = c("TGG"),
-  Arg = c("CGT","CGC","CGA","CGG","AGA","AGG"),
-  Gly = c("GGT","GGC","GGA","GGG")
-)
-
-codon_order_u <- lapply(codon_order, function(x) {
-  str_replace_all(x, "T", "U")
-})
-
-#plot_deviation_comparison(
-#   standard_set_coverage_table,
-#   deviation_row,
-#   GUweight = GUweight
-# )
-
-weighted_standard_table <- standard_set_coverage_table %>%
-  mutate(
-    GUw = GUw * GUweight,
-    CV = M + GUw
-  )
 
 # =========================================================
 # SAVE ALL DEVIATION PLOTS
 # =========================================================
+
+#remove Sec/Pyl deviations
+deviating_aa_sets <- deviating_aa_sets %>%
+  filter(!tRNA_type == "SeC",
+         !tRNA_type == "Pyl",
+         !tRNA_type == "Sup")
+
 
 output_base <- "Plots/coverage_plots"
 
@@ -86,14 +44,17 @@ for (i in seq_len(nrow(deviating_aa_sets))) {
   
   parsed <- str_match_all(
     signature,
-    "([AUGC]{3})\\((-?[0-9.]+),(-?[0-9.]+),(-?[0-9.]+)\\)"
+    "([AUGC]{3})\\((-?[0-9.]+),(-?[0-9.]+),(-?[0-9.]+),(-?[0-9.]+)\\)"
   )[[1]]
   
   codons <- parsed[,2]
-  delta_cv <- as.numeric(parsed[,5])
+  delta_cm <- c(as.numeric(parsed[,3]),
+                           as.numeric(parsed[,4]),
+                           as.numeric(parsed[,5]),
+                           as.numeric(parsed[,6]))
   
   # Determine add/del labels
-  dev_labels <- ifelse(delta_cv > 0, "add", "del")
+  dev_labels <- ifelse(sum(delta_cm) > 0, "add", "del")
   
   # Build codon_dev filename section
   codon_dev_parts <- map2_chr(
@@ -123,11 +84,26 @@ for (i in seq_len(nrow(deviating_aa_sets))) {
   # Generate plot
   # -------------------------------------------------------
   
-  p <- plot_deviation_comparison(
-    weighted_standard_table,
-    deviation_row,
-    GUweight = GUweight
+  
+  deviated_coverage_table <- apply_deviation(standard_set_coverage_table,deviation_row$aa_signature)
+  
+  p1 <- create_alternative_coverage_plot(
+    standard_set_coverage_table,
+    codon_table,
+    coverage_table,
+    aa_subset = aa,
+    title = "standard coverage"
   )
+  
+  p2 <- create_alternative_coverage_plot(
+    deviated_coverage_table,
+    codon_table,
+    coverage_table,
+    aa_subset = aa,
+    title = "deviated coverage"
+  )
+  
+  p <- p1 + p2
   
   # -------------------------------------------------------
   # Save plot
