@@ -128,3 +128,5 @@ ggplot(
   aes(phyPC2, fill = CM)
 ) +
   geom_density(alpha = 0.4)
+
+coef(summary(mod))
