@@ -21,10 +21,20 @@ table(two_fold_subsets$Gln$codon, two_fold_subsets$Gln$CM)  # CAG varies with 74
 table(two_fold_subsets$Lys$codon, two_fold_subsets$Lys$CM)  # AAG varies with 41 alternative samples
 table(two_fold_subsets$Glu$codon, two_fold_subsets$Glu$CM)  # GAG varies with 42 alternative samples
 
+# fit models
 gln <- analyze_twofold(two_fold_subsets$Gln,"CAG",tree)
 lys <- analyze_twofold(two_fold_subsets$Lys,"AAG",tree)
 glu <- analyze_twofold(two_fold_subsets$Glu,"GAG",tree)
 
+# save output
 save_twofold(gln,"plots/aa/Gln")
 save_twofold(lys,"plots/aa/Lys")
 save_twofold(glu,"plots/aa/Glu")
+
+
+# summary table
+bind_rows(
+  summary_table(gln, "Gln"),
+  summary_table(lys, "Lys"),
+  summary_table(glu, "Glu")
+)

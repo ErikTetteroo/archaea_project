@@ -158,7 +158,13 @@ save_twofold <- function(res, aa) {
     aes(GC3, delta, color = state)
   ) +
     geom_point(alpha = 0.4) +
-    geom_smooth(method = "loess")
+    geom_smooth(method = "loess") +
+    coord_cartesian(ylim = c(-2, 2)) +
+    labs(
+      x = "Genome GC3",
+      y = expression(Delta*"RSCU")
+    ) +
+    theme_bw()
   
   ggsave(
     file.path(aa, "GC3_vs_delta.pdf"),
@@ -195,4 +201,23 @@ save_twofold <- function(res, aa) {
   
   dev.off()
   
+}
+
+summary_table <- function(res, aa) {
+  
+  best <- switch(
+    best_model(res),
+    gc = res$fit_gc,
+    quad = res$fit_quad,
+    full = res$fit_full
+  )
+  
+  data.frame(
+    AA = aa,
+    lambda = best$optpar,
+    AIC_gc = res$fit_gc$aic,
+    AIC_quad = res$fit_quad$aic,
+    AIC_full = res$fit_full$aic,
+    AIC_quad_full = res$fit_quad_full$aic
+  )
 }
