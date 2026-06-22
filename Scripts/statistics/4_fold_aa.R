@@ -1,404 +1,173 @@
-# four fold
-# "Val" "Pro" "Thr" "Ala" "Gly"
-v_aa <- aa_dat("Val")
-table(v_aa$codon, v_aa$CM)
+# load project
+source("R/load_project.R")
 
-v_aa <- v_aa %>%
+# read in files
+merged <- read_csv("Data/cleaned_data/codon_usage_data_stats_ready.csv")
+tree <- read.tree("Data/cleaned_data/cleaned_archaea.tree")
+valid_amino_acids <- read_csv("Data/cleaned_data/aa_to_analyse.csv")
+
+# subset the interesting 4 fold amino acids
+four_fold <- valid_amino_acids$aa[valid_amino_acids$Freq==4]
+
+four_fold_subsets <- list()
+
+for (n in four_fold) {
+  four_fold_subsets[[n]] <- aa_subset(merged, n)
+}
+
+#-----------------------------------------------------------------
+# Check which codons have sufficient variation and filter outliers
+#-----------------------------------------------------------------
+# Val
+table(four_fold_subsets$Val$codon, four_fold_subsets$Val$CM) # GUG varies with 36 alternative samples
+four_fold_subsets$Val <- four_fold_subsets$Val %>%           # filter super wobble cases and GUU matches
   group_by(organism_id) %>%
   filter(
     !any(CM == "SU") &
       !any(codon == "GUU" & CM == "M")
   ) %>%
   ungroup()
-
-state <- v_aa %>%
-  filter(codon == "GUG") %>%
-  select(organism_id, state = CM)
-
-dat <- v_aa %>%
-  left_join(state, by = "organism_id") %>%
-  select(
-    organism_id,
-    codon,
-    RSCU,
-    GC3,
-    state
-  ) %>%
-  pivot_wider(
-    names_from = codon,
-    values_from = RSCU
-  )
-
-ggplot(
-  dat,
-  aes(state, RSCU)
-) +
-  geom_boxplot() +
-  facet_wrap(~ codon)
-
-
-
-val_dat <- dat %>%
-  mutate(
-    GC_axis =
-      (GUC + GUG) -
-      (GUU + GUA),
-    
-    GUG_axis =
-      GUG -
-      (GUA + GUC + GUU)/3
-  )
-
-rownames(val_dat) <- val_dat$organism_id
-
-fit_gc <- phylolm(
-  GC_axis ~ GC3 + state,
-  phy = tree,
-  data = val_dat,
-  model = "lambda"
-)
-
-fit_gug <- phylolm(
-  GUG_axis ~ GC3 + state,
-  phy = tree,
-  data = val_dat,
-  model = "lambda"
-)
-
-
-fit_gug1 <- phylolm(
-  GUG_axis ~ GC3,
-  phy = tree,
-  data = val_dat,
-  model = "lambda"
-)
-
-
-summary(fit_gc)
-summary(fit_gug)
-
-fit_gug$aic
-fit_gug1$aic
-
-fit_gc
-
-ggplot(
-  val_dat,
-  aes(GC3, GUG_axis, color = state)
-) +
-  geom_point(alpha = 0.6) +
-  geom_smooth(method = "lm", se = FALSE)
-
-
-# "Thr"
-v_aa <- aa_dat("Thr")
-table(v_aa$codon, v_aa$CM)
-
-v_aa <- v_aa %>%
-  group_by(organism_id) %>%
+#Pro
+table(four_fold_subsets$Pro$codon, four_fold_subsets$Pro$CM) # CCG varies with 74 alternative samples
+four_fold_subsets$Pro <- four_fold_subsets$Pro %>%           # Super wobble variation is present in 25 samples
+  group_by(organism_id) %>%                                  # filter the single CCU match  
   filter(
-    !any(CM == "SU") &
-      !any(codon == "GUU" & CM == "M")
-  ) %>%
-  ungroup()
-
-state <- v_aa %>%
-  filter(codon == "ACG") %>%
-  select(organism_id, state = CM)
-
-dat <- v_aa %>%
-  left_join(state, by = "organism_id") %>%
-  select(
-    organism_id,
-    codon,
-    RSCU,
-    GC3,
-    state
-  ) %>%
-  pivot_wider(
-    names_from = codon,
-    values_from = RSCU
-  )
-
-ggplot(
-  dat,
-  aes(state, RSCU)
-) +
-  geom_boxplot() +
-  facet_wrap(~ codon)
-
-
-
-thr_dat <- dat %>%
-  mutate(
-    GC_axis =
-      (ACC + ACG) -
-      (ACU + ACA),
-    
-    ACG_axis =
-      ACG -
-      (ACC + ACU + ACA)/3
-  )
-
-rownames(thr_dat) <- thr_dat$organism_id
-
-fit_gc <- phylolm(
-  GC_axis ~ GC3 + state,
-  phy = tree,
-  data = thr_dat,
-  model = "lambda"
-)
-
-fit_gug <- phylolm(
-  ACG_axis ~ GC3 + state,
-  phy = tree,
-  data = thr_dat,
-  model = "lambda"
-)
-
-
-fit_gug1 <- phylolm(
-  ACG_axis ~ GC3,
-  phy = tree,
-  data = thr_dat,
-  model = "lambda"
-)
-
-
-summary(fit_gc)
-summary(fit_gug)
-
-fit_gug$aic
-fit_gug1$aic
-
-fit_gc
-
-ggplot(
-  thr_dat,
-  aes(GC3, ACG_axis, color = state)
-) +
-  geom_point(alpha = 0.6) +
-  geom_smooth(method = "lm", se = FALSE)
-
-#"Ala"
-v_aa <- aa_dat("Ala")
-table(v_aa$codon, v_aa$CM)
-
-v_aa <- v_aa %>%
-  group_by(organism_id) %>%
-  filter(
-    !any(CM == "SU")# &
-      #!any(codon == "GUU" & CM == "M")
-  ) %>%
-  ungroup()
-
-state <- v_aa %>%
-  filter(codon == "GCG") %>%
-  select(organism_id, state = CM)
-
-dat <- v_aa %>%
-  left_join(state, by = "organism_id") %>%
-  select(
-    organism_id,
-    codon,
-    RSCU,
-    GC3,
-    state
-  ) %>%
-  pivot_wider(
-    names_from = codon,
-    values_from = RSCU
-  )
-
-ggplot(
-  dat,
-  aes(state, RSCU)
-) +
-  geom_boxplot() +
-  facet_wrap(~ codon)
-
-
-
-ala_dat <- dat %>%
-  mutate(
-    GC_axis =
-      (GCC + GCG) -
-      (GCU + GCA),
-    
-    GCG_axis =
-      GCG -
-      (GCC + GCU + GCA)/3
-  )
-
-rownames(ala_dat) <- ala_dat$organism_id
-
-fit_gc <- phylolm(
-  GC_axis ~ GC3 + state,
-  phy = tree,
-  data = ala_dat,
-  model = "lambda"
-)
-
-fit_gug <- phylolm(
-  GCG_axis ~ GC3 + state,
-  phy = tree,
-  data = ala_dat,
-  model = "lambda"
-)
-
-
-fit_gug1 <- phylolm(
-  GCG_axis ~ GC3,
-  phy = tree,
-  data = ala_dat,
-  model = "lambda"
-)
-
-
-summary(fit_gc)
-summary(fit_gug)
-
-fit_gug$aic
-fit_gug1$aic
-
-
-ggplot(
-  ala_dat,
-  aes(GC3, GCG_axis, color = state)
-) +
-  geom_point(alpha = 0.6) +
-  geom_smooth(method = "lm", se = FALSE)
-
-# "Gly"
-v_aa <- aa_dat("Gly")
-table(v_aa$codon, v_aa$CM)
-
-v_aa <- v_aa %>%
-  group_by(organism_id) %>%
-  filter(
-    !any(CM == "SU") &
-    !any(codon == "GGU" & CM == "M")
-  ) %>%
-  ungroup()
-
-state <- v_aa %>%
-  filter(codon == "GGG") %>%
-  select(organism_id, state = CM)
-
-dat <- v_aa %>%
-  left_join(state, by = "organism_id") %>%
-  select(
-    organism_id,
-    codon,
-    RSCU,
-    GC3,
-    state
-  ) %>%
-  pivot_wider(
-    names_from = codon,
-    values_from = RSCU
-  )
-
-ggplot(
-  dat,
-  aes(state, RSCU)
-) +
-  geom_boxplot() +
-  facet_wrap(~ codon)
-
-
-
-gly_dat <- dat %>%
-  mutate(
-    GC_axis =
-      (GGC + GGG) -
-      (GGU + GGA),
-    
-    GGG_axis =
-      GGG -
-      (GGC + GGU + GGA)/3
-  )
-
-rownames(gly_dat) <- gly_dat$organism_id
-
-fit_gc <- phylolm(
-  GC_axis ~ GC3 + state,
-  phy = tree,
-  data = gly_dat,
-  model = "lambda"
-)
-
-fit_gug <- phylolm(
-  GGG_axis ~ GC3 + state,
-  phy = tree,
-  data = gly_dat,
-  model = "lambda"
-)
-
-
-fit_gug1 <- phylolm(
-  GGG_axis ~ GC3,
-  phy = tree,
-  data = gly_dat,
-  model = "lambda"
-)
-
-
-summary(fit_gc)
-summary(fit_gug)
-
-fit_gug$aic
-fit_gug1$aic
-
-
-ggplot(
-  gly_dat,
-  aes(GC3, GGG_axis, color = state)
-) +
-  geom_point(alpha = 0.6) +
-  geom_smooth(method = "lm", se = FALSE)
-
-
-results <- as.data.frame(coef(summary(fit_gug))["stateM", ])
-
-ggplot(results,
-       aes(
-         y = "amino_acid",
-         x = results[1,],
-         xmin = results[1,] - 1.96*results[2,],
-         xmax = results[1,] + 1.96*results[2,]
-       )) +
-  geom_vline(xintercept = 0,
-             linetype = 2) +
-  geom_pointrange()
-
-#"Pro"
-v_aa <- aa_dat("Pro")
-table(v_aa$codon, v_aa$CM)
-
-v_aa <- v_aa %>%
-  group_by(organism_id) %>%
-  filter(
-    #!any(CM == "SU")# &
     !any(codon == "CCU" & CM == "M")
   ) %>%
   ungroup()
+#Thr
+table(four_fold_subsets$Thr$codon, four_fold_subsets$Thr$CM) # ACG varies with 29 alternative samples
+#Ala
+table(four_fold_subsets$Ala$codon, four_fold_subsets$Ala$CM) # GCG varies with 47 alternative samples
+four_fold_subsets$Ala <- four_fold_subsets$Ala %>%           # filter super wobble cases  
+  group_by(organism_id) %>%
+  filter(
+    !any(CM == "SU")
+  ) %>%
+  ungroup()
+#Gly
+table(four_fold_subsets$Gly$codon, four_fold_subsets$Gly$CM) # GGG varies with 84 alternative samples
+four_fold_subsets$Gly <- four_fold_subsets$Gly %>%           #filter super wobble cases and GGU matches
+  group_by(organism_id) %>%
+  filter(
+    !any(CM == "SU") &
+      !any(codon == "GGU" & CM == "M")
+  ) %>%
+  ungroup()
 
-state <- v_aa %>%
-  filter(codon == "GCG") %>%
-  select(organism_id, state = CM)
+#-----------------------------------------------------------------
+# split organisms based on the state of their varying codons
+#-----------------------------------------------------------------
+four_fold_states <- list()
 
-pro_state1 <- v_aa %>%
+four_fold_states[["Val"]] <- fourfold_prep(four_fold_subsets$Val,"GUG")
+four_fold_states[["Thr"]] <- fourfold_prep(four_fold_subsets$Thr,"ACG")
+four_fold_states[["Ala"]] <- fourfold_prep(four_fold_subsets$Ala,"GCG")
+four_fold_states[["Gly"]] <- fourfold_prep(four_fold_subsets$Gly,"GGG")
+
+state_rscu_boxplot(four_fold_states$Val, "Val")
+state_rscu_boxplot(four_fold_states$Thr, "Thr")
+state_rscu_boxplot(four_fold_states$Ala, "Ala")
+state_rscu_boxplot(four_fold_states$Gly, "Gly")
+
+for (i in 1:length(four_fold_states)) {
+  four_fold_states[[i]] <- four_fold_states[[i]] %>%
+    pivot_wider(
+      names_from = codon,
+      values_from = RSCU
+    )
+}
+
+#-----------------------------------------------------------------
+# split respons variable in 2 axes, CG vs AU; and variable codon vs the rest
+#-----------------------------------------------------------------
+four_fold_ready <- list()
+
+four_fold_ready[["Val"]] <- four_fold_axes(four_fold_states$Val,"GUG")
+four_fold_ready[["Thr"]] <- four_fold_axes(four_fold_states$Thr,"ACG")
+four_fold_ready[["Ala"]] <- four_fold_axes(four_fold_states$Ala,"GCG")
+four_fold_ready[["Gly"]] <- four_fold_axes(four_fold_states$Gly,"GGG")
+
+for (i in 1:length(four_fold_ready)) {
+  rownames(four_fold_ready[[i]]) <- four_fold_ready[[i]]$organism_id
+}
+
+#-----------------------------------------------------------------
+# fit the models
+#-----------------------------------------------------------------
+
+# Val
+fit_val <- analyze_fourfold(four_fold_ready$Val,tree)
+best_val <- best_fourfold(fit_val)
+best_val$gc_delta <-
+  delta_aic(best_val$gc_aic)
+
+best_val$var_delta <-
+  delta_aic(best_val$var_aic)
+
+# Thr
+fit_thr <- analyze_fourfold(four_fold_ready$Thr,tree)
+best_thr <- best_fourfold(fit_thr)
+best_thr$gc_delta <-
+  delta_aic(best_thr$gc_aic)
+
+best_thr$var_delta <-
+  delta_aic(best_thr$var_aic)
+
+# Ala
+fit_ala <- analyze_fourfold(four_fold_ready$Ala,tree)
+best_ala <- best_fourfold(fit_ala)
+best_ala$gc_delta <-
+  delta_aic(best_ala$gc_aic)
+
+best_ala$var_delta <-
+  delta_aic(best_ala$var_aic)
+
+# Gly
+fit_gly <- analyze_fourfold(four_fold_ready$Gly,tree)
+best_gly <- best_fourfold(fit_gly)
+best_gly$gc_delta <-
+  delta_aic(best_gly$gc_aic)
+
+best_gly$var_delta <-
+  delta_aic(best_gly$var_aic)
+
+# save outputs
+save_fourfold(
+  fit = fit_val,
+  best = best_val,
+  aa = "Plots/aa/four_fold/Val"
+)
+save_fourfold(
+  fit = fit_thr,
+  best = best_thr,
+  aa = "Plots/aa/four_fold/Thr"
+)
+save_fourfold(
+  fit = fit_ala,
+  best = best_ala,
+  aa = "Plots/aa/four_fold/Ala"
+)
+save_fourfold(
+  fit = fit_gly,
+  best = best_gly,
+  aa = "Plots/aa/four_fold/Gly"
+)
+
+#---------------------------------------------------------------
+# Proline
+#---------------------------------------------------------------
+pro_state1 <- four_fold_subsets$Pro %>%
   filter(codon == "CCG") %>%
   select(organism_id,
          CCG_state = CM)
 
-pro_state2 <- v_aa %>%
+pro_state2 <- four_fold_subsets$Pro %>%
   filter(codon == "CCC") %>%
   select(organism_id,
          CCC_state = CM)
 
-pro_state3 <- v_aa %>%
+pro_state3 <- four_fold_subsets$Pro %>%
   filter(codon == "CCU") %>%
   select(organism_id,
          CCU_state = CM)
@@ -416,6 +185,7 @@ pro_states <- pro_state1 %>%
 pro_states %>%
   count(CCG_state, CCC_state, CCU_state)
 
+# filter the 2 organisms that have M CCG and SU
 pro_states <- pro_states %>%
   group_by(organism_id) %>%
   filter(
@@ -430,15 +200,7 @@ pro_states <- pro_states %>%
     SU_state  = factor(SU_state)
   )
 
-pro_dat <- v_aa %>%
-  left_join(pro_states, by = "organism_id")
-
-table(pro_dat$CCG_state, pro_dat$SU_state)
-
-ggplot(pro_states, aes(GC3)) +
-  geom_density(aes(fill = CCG_state), alpha = 0.4)
-
-dat <- v_aa %>%
+pro_dat <- four_fold_subsets$Pro %>%
   inner_join(pro_states, by = "organism_id") %>%
   select(
     organism_id,
@@ -446,41 +208,29 @@ dat <- v_aa %>%
     RSCU,
     GC3,
     CCG_state,
-    CCC_state,
-    CCU_state
-  ) %>%
+    SU_state
+  ) 
+
+table(pro_dat$CCG_state, pro_dat$SU_state)
+
+
+pro_dat <- pro_dat %>%
+  mutate(
+    pro_state = case_when(
+      CCG_state == "M" ~ "M",
+      CCG_state == "GU" & SU_state == "M" ~ "GU",
+      CCG_state == "GU" & SU_state == "SU" ~ "GU_SU"
+    ),
+    pro_state = factor(pro_state)
+  ) 
+
+pro_dat <- pro_dat %>%
   pivot_wider(
     names_from = codon,
     values_from = RSCU
   )
 
-ggplot(
-  dat,
-  aes(CCU_state, RSCU)
-) +
-  geom_boxplot() +
-  facet_wrap(~ codon)
-
-ggplot(dat, aes(GC3)) +
-  geom_density(aes(fill = CCC_state), alpha = 0.4)
-
-dat <- dat %>%
-  mutate(
-    pro_state = case_when(
-      CCG_state == "M" & CCC_state == "M" ~ "high",
-      CCG_state == "GU" & CCC_state == "M" ~ "mid",
-      CCG_state == "GU" & CCC_state == "SU" ~ "low",
-      TRUE ~ NA_character_
-    )
-  )
-
-dat$pro_state <- factor(
-  dat$pro_state,
-  levels = c("low", "mid", "high"),
-  ordered = TRUE
-)
-
-pro_dat <- dat %>%
+pro_dat <- pro_dat %>%
   mutate(
     GC_axis =
       (CCC + CCG) -
@@ -497,60 +247,177 @@ pro_dat <- dat %>%
 
 rownames(pro_dat) <- pro_dat$organism_id
 
-fit_gc <- phylolm(
-  GC_axis ~ GC3 + CCG_state,
-  phy = tree,
+fit_gc1 <- phylolm(
+  GC_axis ~ GC3,
   data = pro_dat,
+  phy = tree,
   model = "lambda"
 )
 
-fit_gug <- phylolm(
-  CCG_axis ~ GC3 + CCG_state,
-  phy = tree,
+fit_gc2 <- phylolm(
+  GC_axis ~ GC3 + I(GC3^2),
   data = pro_dat,
+  phy = tree,
   model = "lambda"
 )
 
-
-fit_gug1 <- phylolm(
-  CCG_axis ~ GC3,
-  phy = tree,
+fit_gc3 <- phylolm(
+  GC_axis ~ GC3 + I(GC3^2) + pro_state,
   data = pro_dat,
+  phy = tree,
   model = "lambda"
 )
 
-fit_su <- phylolm(
-  SU_axis ~ GC3 + pro_state,
-  phy = tree,
-  data = pro_dat,
-  model = "lambda"
+fit_var1 <- phylolm(CCG_axis ~ GC3,
+                    data = pro_dat,
+                    phy = tree,
+                    model = "lambda")
+
+fit_var2 <- phylolm(CCG_axis ~ GC3 + I(GC3^2),
+                    data = pro_dat,
+                    phy = tree,
+                    model = "lambda")
+
+fit_var3 <- phylolm(CCG_axis ~ GC3 + pro_state,
+                    data = pro_dat,
+                    phy = tree,
+                    model = "lambda")
+
+fit_var4 <- phylolm(CCG_axis ~ GC3 + I(GC3^2) + pro_state,
+                    data = pro_dat,
+                    phy = tree,
+                    model = "lambda")
+
+pro_fit <- list(
+  dat = pro_dat,
+  
+  fit_gc1 = fit_gc1,
+  fit_gc2 = fit_gc2,
+  fit_gc3 = fit_gc3,
+  
+  fit_var1 = fit_var1,
+  fit_var2 = fit_var2,
+  fit_var3 = fit_var3,
+  fit_var4 = fit_var4
 )
 
-fit_su1 <- phylolm(
-  SU_axis ~ GC3,
-  phy = tree,
-  data = pro_dat,
-  model = "lambda"
+best_pro <- best_fourfold(pro_fit)
+best_pro$gc_delta <-
+  delta_aic(best_pro$gc_aic)
+
+best_pro$var_delta <-
+  delta_aic(best_pro$var_aic)
+
+## ----------------------------
+## Variable axis plot
+## ----------------------------
+
+pred_dat <- expand.grid(
+  GC3 = seq(
+    min(pro_fit$dat$GC3),
+    max(pro_fit$dat$GC3),
+    length.out = 200
+  ),
+  state = unique(pro_fit$dat$pro_state)
 )
 
+fit_vis <- pro_fit$fit_var3
 
-summary(fit_gc)
-summary(fit_gug)
+X <- model.matrix(
+  ~ GC3 + state,
+  pred_dat
+)
 
-fit_gug$aic
-fit_gug1$aic
+b <- coef(fit_vis)
 
-summary(fit_su)
+pred_dat$pred <- X %*% b
 
-fit_su$aic
-fit_su1$aic
+V <- vcov(fit_vis)
 
-ggplot(
-  pro_dat,
-  aes(GC3, SU_axis, color = pro_state)
+pred_dat$se <- sqrt(
+  diag(X %*% V %*% t(X))
+)
+
+pred_dat <- pred_dat %>%
+  mutate(
+    lower = pred - 1.96 * se,
+    upper = pred + 1.96 * se
+  )
+
+pdf(file.path("Plots/aa/four_fold/Pro/variable_axis.pdf"),
+    width = 6,
+    height = 5)
+
+p <- ggplot(
+  pro_fit$dat,
+  aes(
+    GC3,
+    CCG_axis,
+    color = pro_state
+  )
 ) +
-  geom_point(alpha = 0.6) +
-  geom_smooth(method = "lm", se = FALSE)
+  geom_point(alpha = 0.3) +
+  
+  geom_ribbon(
+    data = pred_dat,
+    aes(
+      x = GC3,
+      ymin = lower,
+      ymax = upper,
+      fill = state
+    ),
+    alpha = 0.2,
+    colour = NA,
+    inherit.aes = FALSE
+  ) +
+  
+  geom_line(
+    data = pred_dat,
+    aes(
+      x = GC3,
+      y = pred,
+      color = state
+    ),
+    linewidth = 1,
+    inherit.aes = FALSE
+  )
+print(p)
 
-ggplot(pro_dat, aes(GC3, fill = pro_state)) +
-  geom_density(alpha = 0.4)
+dev.off()
+
+## ----------------------------
+## Residual plot
+## ----------------------------
+
+pdf(file.path("Plots/aa/four_fold/Pro/residuals.pdf"),
+    width = 5,
+    height = 5)
+
+plot(
+  fitted(best_pro$var_fit),
+  residuals(best_pro$var_fit),
+  xlab = "Fitted values",
+  ylab = "Residuals"
+)
+
+abline(
+  h = 0,
+  lty = 2
+)
+
+dev.off()
+
+## ----------------------------
+## QQ plot
+## ----------------------------
+
+pdf(file.path("Plots/aa/four_fold/Pro/qqplot.pdf"),
+    width = 5,
+    height = 5)
+
+qqnorm(residuals(best_pro$var_fit))
+qqline(residuals(best_pro$var_fit))
+
+dev.off()
+
+
