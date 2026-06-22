@@ -49,6 +49,19 @@ source("Scripts/data_prep/deviation_vs_direct_validation.R")
 # taxonomy
 #-------------------------------------------------------------------------------
 
+# This script was used to clean tree tip labels and to explore which organisms
+# were cut in the tree. Originally a pcoa was used to add tree data to the 
+# merged dataset. But this didn't provide enought taxonomic coverage for the 
+# analysis and the code for this was therefore moved to the outdated scripts
+source("Scripts/data_prep/taxonomy.R")
+
+#-------------------------------------------------------------------------------
+# statistics
+#-------------------------------------------------------------------------------
+
+# step 1: Check which amino acids are viable for analysis and visualize this
+source("Scripts/statistics/stats_prep.R")
+
 #-------------------------------------------------------------------------------
 # codon pairs
 #-------------------------------------------------------------------------------
