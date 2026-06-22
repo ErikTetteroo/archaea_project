@@ -120,9 +120,9 @@ save_twofold <- function(res, aa) {
   
   dir.create(aa, showWarnings = FALSE)
   
-  ############################
+  #---------------------------
   # choose best model
-  ############################
+  #---------------------------
   
   best <- switch(
     best_model(res),
@@ -131,27 +131,27 @@ save_twofold <- function(res, aa) {
     full = res$fit_full
   )
   
-  ############################
+  #---------------------------
   # model selection
-  ############################
+  #---------------------------
   
   write_csv(
     model_table(res),
     file.path(aa, "model_selection.csv")
   )
   
-  ############################
+  #---------------------------
   # model summary
-  ############################
+  #---------------------------
   
   capture.output(
     summary(best),
     file = file.path(aa, "model_summary.txt")
   )
   
-  ############################
+  #---------------------------
   # GC3 plot
-  ############################
+  #---------------------------
   
   p1 <- ggplot(
     res$dat,
@@ -167,9 +167,9 @@ save_twofold <- function(res, aa) {
     height = 4
   )
   
-  ############################
+  #---------------------------
   # residuals
-  ############################
+  #---------------------------
   
   pdf(file.path(aa, "residuals.pdf"))
   
@@ -184,9 +184,9 @@ save_twofold <- function(res, aa) {
   
   dev.off()
   
-  ############################
+  #---------------------------
   # QQ plot
-  ############################
+  #---------------------------
   
   pdf(file.path(aa, "qqplot.pdf"))
   
