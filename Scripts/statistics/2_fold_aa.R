@@ -31,7 +31,6 @@ save_twofold(gln,"plots/aa/Gln")
 save_twofold(lys,"plots/aa/Lys")
 save_twofold(glu,"plots/aa/Glu")
 
-
 # summary table
 bind_rows(
   summary_table(gln, "Gln"),
