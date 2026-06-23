@@ -606,3 +606,430 @@ save_fourfold <- function(fit,
   
   dev.off()
 }
+
+# six fold
+
+six_fold_axes <- function(aa_ss, variable_codons) {
+  
+  codons <- setdiff(
+    names(aa_ss),
+    c("organism_id", "GC3", "state","AGG_state","CGG_state")
+  )
+  
+  gc_codons <- codons[
+    substr(codons, 3, 3) %in% c("G", "C")
+  ]
+  
+  au_codons <- codons[
+    substr(codons, 3, 3) %in% c("A", "U")
+  ]
+  
+  other_codons <- setdiff(
+    codons,
+    variable_codons
+  )
+  
+  aa_ss %>%
+    mutate(
+      GC_axis =
+        rowSums(across(all_of(gc_codons))) -
+        rowSums(across(all_of(au_codons))),
+      
+      var_axis =
+        rowMeans(across(all_of(variable_codons))) -
+        rowMeans(across(all_of(other_codons)))
+    )
+}
+
+analyze_sixfold <- function(dat, tree) {
+  
+  ## ---------- GC axis ----------
+  
+  fit_gc1 <- phylolm(
+    GC_axis ~ GC3,
+    data = dat,
+    phy = tree,
+    model = "lambda"
+  )
+  
+  fit_gc2 <- phylolm(
+    GC_axis ~ GC3 + I(GC3^2),
+    data = dat,
+    phy = tree,
+    model = "lambda"
+  )
+  
+  fit_gc3 <- phylolm(
+    GC_axis ~ GC3 + state,
+    data = dat,
+    phy = tree,
+    model = "lambda"
+  )
+  
+  fit_gc4 <- phylolm(
+    GC_axis ~ GC3 + I(GC3^2) + state,
+    data = dat,
+    phy = tree,
+    model = "lambda"
+  )
+  
+  ## ---------- variable axis ----------
+  
+  fit_var1 <- phylolm(
+    var_axis ~ GC3,
+    data = dat,
+    phy = tree,
+    model = "lambda"
+  )
+  
+  fit_var2 <- phylolm(
+    var_axis ~ GC3 + I(GC3^2),
+    data = dat,
+    phy = tree,
+    model = "lambda"
+  )
+  
+  fit_var3 <- phylolm(
+    var_axis ~ GC3 + state,
+    data = dat,
+    phy = tree,
+    model = "lambda"
+  )
+  
+  fit_var4 <- phylolm(
+    var_axis ~ GC3 + I(GC3^2) + state,
+    data = dat,
+    phy = tree,
+    model = "lambda"
+  )
+  
+  list(
+    dat = dat,
+    
+    fit_gc1 = fit_gc1,
+    fit_gc2 = fit_gc2,
+    fit_gc3 = fit_gc3,
+    fit_gc4 = fit_gc4,
+    
+    fit_var1 = fit_var1,
+    fit_var2 = fit_var2,
+    fit_var3 = fit_var3,
+    fit_var4 = fit_var4
+  )
+}
+
+best_sixfold <- function(fit) {
+  
+  gc_aic <- c(
+    linear           = fit$fit_gc1$aic,
+    quadratic        = fit$fit_gc2$aic,
+    linear_state     = fit$fit_gc3$aic,
+    quadratic_state  = fit$fit_gc4$aic
+  )
+  
+  var_aic <- c(
+    linear           = fit$fit_var1$aic,
+    quadratic        = fit$fit_var2$aic,
+    linear_state     = fit$fit_var3$aic,
+    quadratic_state  = fit$fit_var4$aic
+  )
+  
+  list(
+    gc_aic = gc_aic,
+    var_aic = var_aic,
+    
+    best_gc =
+      names(which.min(gc_aic)),
+    
+    best_var =
+      names(which.min(var_aic))
+  )
+}
+
+save_sixfold <- function(fit, best, aa) {
+  
+  dir.create(aa, showWarnings = FALSE)
+  
+  ## ----------------------------
+  ## AIC table
+  ## ----------------------------
+  
+  aic_table <- bind_rows(
+    tibble(
+      axis = "GC_axis",
+      model = names(best$gc_aic),
+      AIC = unname(best$gc_aic),
+      deltaAIC = unname(best$gc_delta)
+    ),
+    tibble(
+      axis = "variable_axis",
+      model = names(best$var_aic),
+      AIC = unname(best$var_aic),
+      deltaAIC = unname(best$var_delta)
+    )
+  )
+  
+  write_csv(
+    aic_table,
+    file.path(aa, "model_selection.csv")
+  )
+  
+  ## ----------------------------
+  ## Prediction data
+  ## ----------------------------
+  
+  pred_dat <- expand.grid(
+    GC3 = seq(
+      min(fit$dat$GC3),
+      max(fit$dat$GC3),
+      length.out = 200
+    ),
+    state = unique(fit$dat$state)
+  )
+  
+  best_model <- names(which.min(best$var_aic))
+  
+  if (best_model == "linear") {
+    X <- model.matrix(~ GC3, pred_dat)
+    fit_vis <- fit$fit_var1
+  }
+  if (best_model == "quadratic") {
+    X <- model.matrix(~ GC3 + I(GC3^2), pred_dat)
+    fit_vis <- fit$fit_var2
+  }
+  if (best_model == "linear_state") {
+    X <- model.matrix(~ GC3 + state, pred_dat)
+    fit_vis <- fit$fit_var3
+  }
+  if (best_model == "quadratic_state") {
+    X <- model.matrix(~ GC3 + I(GC3^2) + state, pred_dat)
+    fit_vis <- fit$fit_var4
+  }
+  
+  
+  b <- coef(fit_vis)
+  
+  pred_dat$pred <- as.vector(X %*% b)
+  
+  V <- vcov(fit_vis)
+  
+  pred_dat$se <- sqrt(
+    diag(X %*% V %*% t(X))
+  )
+  
+  pred_dat <- pred_dat %>%
+    mutate(
+      lower = pred - 1.96 * se,
+      upper = pred + 1.96 * se
+    )
+  
+  ## ----------------------------
+  ## Model summaries
+  ## ----------------------------
+  
+  sink(file.path(aa, "model_summary.txt"))
+  
+  cat("GC AXIS MODEL\n")
+  cat("====================\n\n")
+  print(summary(fit_vis))
+  
+  cat("\n\n")
+  
+  cat("VARIABLE AXIS MODEL\n")
+  cat("====================\n\n")
+  print(summary(fit_vis))
+  
+  sink()
+  
+  
+  ## ----------------------------
+  ## Variable axis
+  ## ----------------------------
+  
+  pdf(
+    file.path(aa, "variable_axis.pdf"),
+    width = 6,
+    height = 5
+  )
+  
+  p <- ggplot(
+    fit$dat,
+    aes(
+      GC3,
+      var_axis,
+      color = state
+    )
+  ) +
+    geom_point(alpha = 0.3) +
+    
+    geom_ribbon(
+      data = pred_dat,
+      aes(
+        x = GC3,
+        ymin = lower,
+        ymax = upper,
+        fill = state
+      ),
+      alpha = 0.2,
+      colour = NA,
+      inherit.aes = FALSE
+    ) +
+    
+    geom_line(
+      data = pred_dat,
+      aes(
+        x = GC3,
+        y = pred,
+        color = state
+      ),
+      linewidth = 1,
+      inherit.aes = FALSE
+    ) +
+    
+    labs(
+      x = "GC3",
+      y = "Variable codon axis"
+    )
+  
+  print(p)
+  
+  dev.off()
+  
+  ## ----------------------------
+  ## GC axis
+  ## ----------------------------
+  
+  pred_gc <- expand.grid(
+    GC3 = seq(
+      min(fit$dat$GC3),
+      max(fit$dat$GC3),
+      length.out = 200
+    ),
+    state = unique(fit$dat$state)
+  )
+  
+  best_model <- names(which.min(best$gc_aic))
+  
+  if (best_model == "linear") {
+    X <- model.matrix(~ GC3, pred_gc)
+    gc_vis <- fit$fit_gc1
+  }
+  if (best_model == "quadratic") {
+    X <- model.matrix(~ GC3 + I(GC3^2), pred_gc)
+    gc_vis <- fit$fit_gc2
+  }
+  if (best_model == "linear_state") {
+    X <- model.matrix(~ GC3 + state, pred_gc)
+    gc_vis <- fit$fit_gc3
+  }
+  if (best_model == "quadratic_state") {
+    X <- model.matrix(~ GC3 + I(GC3^2) + state, pred_gc)
+    gc_vis <- fit$fit_gc4
+  }
+  
+  
+  
+  b <- coef(gc_vis)
+  
+  pred_gc$pred <- as.vector(X %*% b)
+  
+  V <- vcov(gc_vis)
+  
+  pred_gc$se <- sqrt(
+    diag(X %*% V %*% t(X))
+  )
+  
+  pred_gc <- pred_gc %>%
+    mutate(
+      lower = pred - 1.96 * se,
+      upper = pred + 1.96 * se
+    )
+  
+  pdf(
+    file.path(aa, "GC_axis.pdf"),
+    width = 6,
+    height = 5
+  )
+  
+  p <- ggplot(
+    fit$dat,
+    aes(
+      GC3,
+      GC_axis,
+      color = state
+    )
+  ) +
+    geom_point(alpha = 0.3) +
+    
+    geom_ribbon(
+      data = pred_gc,
+      aes(
+        x = GC3,
+        ymin = lower,
+        ymax = upper,
+        fill = state
+      ),
+      alpha = 0.2,
+      colour = NA,
+      inherit.aes = FALSE
+    ) +
+    
+    geom_line(
+      data = pred_gc,
+      aes(
+        x = GC3,
+        y = pred,
+        color = state
+      ),
+      linewidth = 1,
+      inherit.aes = FALSE
+    ) +
+    
+    labs(
+      x = "GC3",
+      y = "GC axis"
+    )
+  
+  print(p)
+  
+  dev.off()
+  
+  ## ----------------------------
+  ## Residual plot
+  ## ----------------------------
+  
+  pdf(
+    file.path(aa, "residuals.pdf"),
+    width = 5,
+    height = 5
+  )
+  
+  plot(
+    fitted(fit_vis),
+    residuals(fit_vis),
+    xlab = "Fitted values",
+    ylab = "Residuals"
+  )
+  
+  abline(
+    h = 0,
+    lty = 2
+  )
+  
+  dev.off()
+  
+  ## ----------------------------
+  ## QQ plot
+  ## ----------------------------
+  
+  pdf(
+    file.path(aa, "qqplot.pdf"),
+    width = 5,
+    height = 5
+  )
+  
+  qqnorm(residuals(fit_vis))
+  qqline(residuals(fit_vis))
+  
+  dev.off()
+}

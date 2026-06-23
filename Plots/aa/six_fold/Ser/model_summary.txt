@@ -1,0 +1,64 @@
+GC AXIS MODEL
+====================
+
+
+Call:
+phylolm(formula = var_axis ~ GC3 + I(GC3^2), data = dat, phy = tree, 
+    model = "lambda")
+
+    AIC  logLik 
+-1020.8   515.4 
+
+Raw residuals:
+     Min       1Q   Median       3Q      Max 
+-0.71454 -0.02751  0.78585  1.14926  1.63746 
+
+Mean tip height: 1.141603
+Parameter estimate(s) using ML:
+lambda : 1
+sigma2: 0.2267102 
+
+Coefficients:
+            Estimate   StdErr t.value   p.value    
+(Intercept) -0.96168  0.20358 -4.7239 2.813e-06 ***
+GC3          0.26096  0.29449  0.8861    0.3759    
+I(GC3^2)     1.89402  0.21889  8.6526 < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+R-squared: 0.634	Adjusted R-squared: 0.6329 
+
+Note: p-values and R-squared are conditional on lambda=1.
+
+
+VARIABLE AXIS MODEL
+====================
+
+
+Call:
+phylolm(formula = var_axis ~ GC3 + I(GC3^2), data = dat, phy = tree, 
+    model = "lambda")
+
+    AIC  logLik 
+-1020.8   515.4 
+
+Raw residuals:
+     Min       1Q   Median       3Q      Max 
+-0.71454 -0.02751  0.78585  1.14926  1.63746 
+
+Mean tip height: 1.141603
+Parameter estimate(s) using ML:
+lambda : 1
+sigma2: 0.2267102 
+
+Coefficients:
+            Estimate   StdErr t.value   p.value    
+(Intercept) -0.96168  0.20358 -4.7239 2.813e-06 ***
+GC3          0.26096  0.29449  0.8861    0.3759    
+I(GC3^2)     1.89402  0.21889  8.6526 < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+R-squared: 0.634	Adjusted R-squared: 0.6329 
+
+Note: p-values and R-squared are conditional on lambda=1.
