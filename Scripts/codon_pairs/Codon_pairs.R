@@ -12,6 +12,18 @@ merged$codon <- rna_to_dna(merged$codon)
 cm_lookup <- merged %>%
   select(organism_id, codon, CM)
 
+
+gc_lookup <- merged %>%
+  select(organism_id, codon, GC3)
+
+
+#add GC3
+codon_pair_usage <- codon_pair_usage %>%
+  left_join(
+    gc_lookup,
+    by = c("organism" = "organism_id", "c1" = "codon")
+  )
+
 #add coverage value codon 1
 codon_pair_usage <- codon_pair_usage %>%
   left_join(
@@ -53,7 +65,7 @@ ggplot(
   theme_bw() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-
+write_csv(codon_pair_usage,"Data/raw_data/codon_pair_usage_clean.csv" )
 
 #creating a heatmap#######################################################
 

@@ -12,6 +12,7 @@ library(patchwork)
 library(purrr)
 library(ape)
 library(phylolm)
+library(lme4)
 
 #------------------------------
 # Load basic functions
