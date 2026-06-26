@@ -114,25 +114,6 @@ pair_effects <- pairs_focus %>%
 
 test <- pairs_focus[pairs_focus$organism==unique(pairs_focus$organism)[25],]
 
-organism_summary <- pairs_focus %>%
-  group_by(organism, wobbles) %>%
-  summarise(
-    mean_RDCU = mean(log2_RDCU),
-    .groups = "drop"
-  )
-
-organism_summary <- organism_summary %>%
-  pivot_wider(
-    names_from = wobbles,
-    values_from = mean_RDCU,
-    names_prefix = "w"
-  )
-
-organism_summary <- organism_summary %>%
-  mutate(
-    double_wobble_effect = w2 - w0
-  )
-
 fit <- lmer(
   log2_RDCU ~ GC3 + factor(wobbles) +
     (1 | codon_pair),
@@ -396,9 +377,9 @@ ggplot(
 
 pair_o[1]
 
-pair <- pair_results[["TTGCGG"]]
+pair <- pair_results[["TTGCCG"]]
 
-best_fit <- pair$fit_fac   # example
+best_fit <- pair$fit_fac_int   # example
 dat <- pair$data
 
 pred_dat <- expand.grid(
@@ -411,7 +392,7 @@ pred_dat <- expand.grid(
 )
 
 X <- model.matrix(
-  ~ GC3 + wobble_state,
+  ~ GC3 + wobble_state + GC3:wobble_state,
   data = pred_dat
 )
 
@@ -466,4 +447,272 @@ ggplot() +
       color = wobble_state
     ),
     linewidth = 1
+  )
+
+ggplot(pair$data,
+       aes(GC3,
+           log2_RDCU,
+           color = wobble_state)) +
+  geom_point() +
+  geom_smooth(method = "lm",
+              formula = y ~ x,
+              se = FALSE)
+
+
+
+plot_pair_interaction <- function(pair_name,
+                                  pair_results) {
+  
+  pair <- pair_results[[pair_name]]
+  
+  dat <- pair$data
+  fit <- pair$fit_fac_int
+  
+  if(is.null(fit)) {
+    stop("No interaction model found for ", pair_name)
+  }
+  
+  pred_dat <- expand.grid(
+    GC3 = seq(
+      min(dat$GC3),
+      max(dat$GC3),
+      length.out = 200
+    ),
+    wobble_state = levels(dat$wobble_state)
+  )
+  
+  X <- model.matrix(
+    ~ GC3 * wobble_state,
+    data = pred_dat
+  )
+  
+  b <- as.numeric(coef(fit))
+  
+  pred_dat$pred <- as.numeric(
+    X %*% b
+  )
+  
+  V <- vcov(fit)
+  
+  pred_dat$se <- sqrt(
+    diag(
+      X %*% V %*% t(X)
+    )
+  )
+  
+  pred_dat <- pred_dat %>%
+    mutate(
+      lower = pred - 1.96 * se,
+      upper = pred + 1.96 * se
+    )
+  
+  ggplot() +
+    
+    geom_point(
+      data = dat,
+      aes(
+        GC3,
+        log2_RDCU,
+        color = wobble_state
+      ),
+      alpha = 0.4
+    ) +
+    
+    geom_ribbon(
+      data = pred_dat,
+      aes(
+        x = GC3,
+        ymin = lower,
+        ymax = upper,
+        fill = wobble_state
+      ),
+      alpha = 0.2,
+      colour = NA
+    ) +
+    
+    geom_line(
+      data = pred_dat,
+      aes(
+        GC3,
+        pred,
+        color = wobble_state
+      ),
+      linewidth = 1
+    ) +
+    
+    labs(
+      title = pair_name,
+      y = "log2 RDCU",
+      x = "GC3"
+    ) +
+    
+    theme_bw()
+}
+
+top_pairs <- pair_summary_results %>%
+  arrange(desc(delta_to_gc)) %>%
+  slice(1:13) %>%
+  pull(codon_pair)
+
+top_pairs <- top_pairs[1:13]
+
+dir.create("pair_plots", showWarnings = FALSE)
+
+for(pair_name in top_pairs) {
+  
+  delta <- pair_summary_results %>%
+    filter(codon_pair == pair_name) %>%
+    pull(delta_to_gc)
+  
+  
+  
+  p <- plot_pair_interaction(
+    pair_name,
+    pair_results
+  )
+  
+  p <- p +
+    labs(
+      title = paste0(
+        pair_name,
+        "  (ΔAIC = ",
+        round(delta,1),
+        ")"
+      )
+    )
+  
+  ggsave(
+    file.path(
+      "pair_plots",
+      paste0(pair_name, ".pdf")
+    ),
+    p,
+    width = 6,
+    height = 5
+  )
+}
+
+library(patchwork)
+
+plots <- lapply(
+  top_pairs,
+  plot_pair_interaction,
+  pair_results = pair_results
+)
+
+wrap_plots(plots)
+
+
+plot_pair_interaction("CCGGGG",pair_results)
+
+top_pair_info <- pairs_focus %>%
+  filter(codon_pair %in% top_pairs) %>%
+  group_by(codon_pair) %>%
+  summarise(
+    c1 = first(c1),
+    c2 = first(c2),
+    aa1 = first(aa1),
+    aa2 = first(aa2),
+    .groups = "drop"
+  )
+
+top_pair_info$codon_pair <- factor(top_pair_info$codon_pair,
+                                   levels = top_pairs)
+
+#--------------------------
+
+pair_name <- "ACGGGG"
+
+state_map <- pairs_focus %>%
+  filter(codon_pair == pair_name) %>%
+  select(
+    organism,
+    wobble_state
+  )
+
+pair_info <- pairs_focus %>%
+  filter(codon_pair == pair_name) %>%
+  slice(1)
+
+aa1_target <- pair_info$aa1
+aa2_target <- pair_info$aa2
+
+syn_pairs <- pairs_c %>%
+  filter(
+    aa1 == aa1_target,
+    aa2 == aa2_target
+  )
+
+plot_dat <- syn_pairs %>%
+  inner_join(
+    state_map,
+    by = "organism"
+  )
+
+plot_sum <- plot_dat %>%
+  group_by(
+    wobble_state,
+    codon_pair
+  ) %>%
+  summarise(
+    mean_RDCU = mean(log2_RDCU),
+    .groups = "drop"
+  )
+
+plot_dat <- plot_dat %>%
+  mutate(
+    focal = codon_pair == pair_name
+  )
+
+ggplot(
+  plot_dat,
+  aes(
+    codon_pair,
+    log2_RDCU,
+    fill = focal
+  )
+) +
+  geom_boxplot() +
+  
+  facet_wrap(
+    ~ wobble_state
+  ) +
+  
+  theme_bw() +
+  theme(
+    axis.text.x =
+      element_text(
+        angle = 90,
+        hjust = 1
+      )
+  )
+
+ggplot(
+  plot_sum,
+  aes(
+    codon_pair,
+    mean_RDCU,
+    fill = focal
+  )
+) +
+  geom_boxplot() +
+  
+  geom_jitter(
+    width = 0.15,
+    alpha = 0.5
+  ) +
+  
+  facet_wrap(
+    ~ wobble_state,
+    scales = "free_y"
+  ) +
+  
+  theme_bw() +
+  
+  theme(
+    axis.text.x =
+      element_text(
+        angle = 90,
+        hjust = 1
+      )
   )
