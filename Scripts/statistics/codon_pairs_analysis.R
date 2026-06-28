@@ -116,9 +116,11 @@ test <- pairs_focus[pairs_focus$organism==unique(pairs_focus$organism)[25],]
 
 fit <- lmer(
   log2_RDCU ~ GC3 + factor(wobbles) +
-    (1 | codon_pair),
+    (1 | codon_pair) + (1 | organism),
   data = pairs_focus
 )
+
+summary(fit)
 
 org_resid <- pairs_focus %>%
   mutate(resid = residuals(fit)) %>%

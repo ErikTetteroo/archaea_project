@@ -344,9 +344,9 @@ pred_dat <- pred_dat %>%
     upper = pred + 1.96 * se
   )
 
-pdf(file.path("Plots/aa/four_fold/Pro/variable_axis.pdf"),
-    width = 6,
-    height = 5)
+jpeg(file.path("Plots/aa/four_fold/Pro/variable_axis.jpeg"),
+    width = 600,
+    height = 500)
 
 p <- ggplot(
   pro_fit$dat,

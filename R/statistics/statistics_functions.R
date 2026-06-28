@@ -235,7 +235,7 @@ save_twofold <- function(res, aa) {
     )
   
   ggsave(
-    file.path(aa, "GC3_vs_delta.pdf"),
+    file.path(aa, "GC3_vs_delta.jpeg"),
     p1,
     width = 6,
     height = 4
@@ -530,9 +530,9 @@ save_fourfold <- function(fit,
       upper = pred + 1.96 * se
     )
   
-  pdf(file.path(aa, "variable_axis.pdf"),
-      width = 6,
-      height = 5)
+  jpeg(file.path(aa, "variable_axis.jpeg"),
+      width = 600,
+      height = 500)
   
   p <- ggplot(
     fit$dat,
@@ -846,10 +846,10 @@ save_sixfold <- function(fit, best, aa) {
   ## Variable axis
   ## ----------------------------
   
-  pdf(
-    file.path(aa, "variable_axis.pdf"),
-    width = 6,
-    height = 5
+  jpeg(
+    file.path(aa, "variable_axis.jpeg"),
+    width = 900,
+    height = 800
   )
   
   p <- ggplot(
