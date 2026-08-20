@@ -57,6 +57,7 @@ four_fold_subsets$Gly <- four_fold_subsets$Gly %>%           #filter super wobbl
 
 #-----------------------------------------------------------------
 # split organisms based on the state of their varying codons
+# proline is done seperatly below
 #-----------------------------------------------------------------
 four_fold_states <- list()
 
@@ -247,6 +248,7 @@ pro_dat <- pro_dat %>%
 
 rownames(pro_dat) <- pro_dat$organism_id
 
+#fit the models
 fit_gc1 <- phylolm(
   GC_axis ~ GC3,
   data = pro_dat,
@@ -419,5 +421,3 @@ qqnorm(residuals(best_pro$var_fit))
 qqline(residuals(best_pro$var_fit))
 
 dev.off()
-
-

@@ -20,6 +20,8 @@ dup_summary <-
 
 dup_summary <- dup_summary[1:10,]
 
+dup_var_codons <- c("UGC","GAC")
+
 dup_subset <- merged[merged$codon %in% dup_var_codons,]
 dup_subset_a <- merged[merged$amino_acid %in% dup_subset$amino_acid,]
 
@@ -42,7 +44,6 @@ ggplot(
   geom_bar() +
   facet_wrap(~codon)
 
-test <- dup_subset[dup_subset$codon=="UUA",]
 
 for (n in unique(dup_subset$codon)) {
   print(summary(dup_subset$M[dup_subset$codon==n]))
@@ -53,10 +54,6 @@ t <- dup_subset %>%
   count(codon, M) 
 
 #"GCA"
-
-dup_var_codons <- c("UGC","GAC")
-
-
 
 make_dup_twofold <- function(dat, variable_codon) {
   
@@ -151,10 +148,6 @@ ggplot(
   aes(GC3, delta, color = factor(M))
 ) +
   geom_point(alpha = 0.5)
-
-cor.test(asp_dat$GC3, asp_dat$M, method = "spearman")
-
-cor.test(cys_dat$GC3, cys_dat$M, method = "spearman")
 
 ggplot(
   cys_dat,
@@ -275,9 +268,6 @@ fit4l$aic
 
 summary(fit4l)
 
-
-sd(log(cys_dat$M))
-sd(cys_dat$GC3)
 
 beta_M  <- coef(fit4l)["log(M)"] * sd(log(cys_dat$M))
 beta_GC <- coef(fit4l)["GC3"] * sd(cys_dat$GC3)

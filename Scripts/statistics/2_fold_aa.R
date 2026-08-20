@@ -37,3 +37,5 @@ bind_rows(
   summary_table(lys, "Lys"),
   summary_table(glu, "Glu")
 )
+
+# GC quadratic model is the best in all cases

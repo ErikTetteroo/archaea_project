@@ -62,6 +62,15 @@ source("Scripts/data_prep/taxonomy.R")
 # step 1: Check which amino acids are viable for analysis and visualize this
 source("Scripts/statistics/stats_prep.R")
 
+# step 2: analyse the twofold amino acids
+source("Scripts/statistics/2_fold_aa.R")
+
+# step 3: analyse the fourfold amino acids
+source("Scripts/statistics/4_fold_aa.R")
+
+# step 4: analyse the sixfold amino acids
+source("Scripts/statistics/6_fold_aa.R")
+
 #-------------------------------------------------------------------------------
 # codon pairs
 #-------------------------------------------------------------------------------

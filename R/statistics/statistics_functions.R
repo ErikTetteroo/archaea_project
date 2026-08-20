@@ -1033,3 +1033,279 @@ save_sixfold <- function(fit, best, aa) {
   
   dev.off()
 }
+
+## codon pairs analysis
+
+plot_pair_interaction <- function(pair_name,
+                                  pair_results) {
+  
+  pair <- pair_results[[pair_name]]
+  
+  dat <- pair$data
+  fit <- pair$fit_fac_int
+  
+  if(is.null(fit)) {
+    stop("No interaction model found for ", pair_name)
+  }
+  
+  pred_dat <- expand.grid(
+    GC3 = seq(
+      min(dat$GC3),
+      max(dat$GC3),
+      length.out = 200
+    ),
+    wobble_state = levels(dat$wobble_state)
+  )
+  
+  X <- model.matrix(
+    ~ GC3 * wobble_state,
+    data = pred_dat
+  )
+  
+  b <- as.numeric(coef(fit))
+  
+  pred_dat$pred <- as.numeric(
+    X %*% b
+  )
+  
+  V <- vcov(fit)
+  
+  pred_dat$se <- sqrt(
+    diag(
+      X %*% V %*% t(X)
+    )
+  )
+  
+  pred_dat <- pred_dat %>%
+    mutate(
+      lower = pred - 1.96 * se,
+      upper = pred + 1.96 * se
+    )
+  
+  ggplot() +
+    
+    geom_point(
+      data = dat,
+      aes(
+        GC3,
+        log2_RDCU,
+        color = wobble_state
+      ),
+      alpha = 0.4
+    ) +
+    
+    geom_ribbon(
+      data = pred_dat,
+      aes(
+        x = GC3,
+        ymin = lower,
+        ymax = upper,
+        fill = wobble_state
+      ),
+      alpha = 0.2,
+      colour = NA
+    ) +
+    
+    geom_line(
+      data = pred_dat,
+      aes(
+        GC3,
+        pred,
+        color = wobble_state
+      ),
+      linewidth = 1
+    ) +
+    
+    labs(
+      title = pair_name,
+      y = "log2 RDCU",
+      x = "GC3"
+    ) +
+    
+    theme_bw()
+}
+
+analyze_pair_codon <- function(dat,
+                               tree,
+                               response) {
+  dat <- as.data.frame(dat)
+  
+  row.names(dat) <- dat$organism
+  
+  dat$CMP <- droplevels(factor(dat$CMP))
+  
+  gc_formula <- as.formula(
+    paste(response, "~ GC3")
+  )
+  
+  fac_formula <- as.formula(
+    paste(response, "~ GC3 + CMP")
+  )
+  
+  fac_int_formula <- as.formula(
+    paste(response, "~ GC3 + CMP + GC3:CMP")
+  )
+  
+  fit_gc <- tryCatch(
+    
+    phylolm(
+      gc_formula,
+      phy = tree,
+      data = dat,
+      model = "lambda"
+    ),
+    
+    error = function(e) {
+      message("GC model failed for ", pair_name)
+      message(e$message)
+      NULL
+    }
+  )
+  
+    fit_fac <- tryCatch(
+    
+    phylolm(
+      fac_formula,
+      phy = tree,
+      data = dat,
+      model = "lambda"
+    ),
+    
+    error = function(e) {
+      message("factor model failed for ", pair_name)
+      message(e$message)
+      NULL
+    }
+  )
+  
+  fit_fac_int <- tryCatch(
+    
+    phylolm(
+      fac_int_formula,
+      phy = tree,
+      data = dat,
+      model = "lambda"
+    ),
+    
+    error = function(e) {
+      message("factor interaction model failed for ", pair_name)
+      message(e$message)
+      NULL
+    }
+  )
+  
+  list(
+    
+    data = dat,
+    
+    fit_gc = fit_gc,
+    fit_fac = fit_fac,
+    fit_fac_int = fit_fac_int,
+    
+    aic = c(
+      
+      gc = ifelse(is.null(fit_gc), NA, fit_gc$aic),
+      
+      factor = ifelse(is.null(fit_fac), NA, fit_fac$aic),
+      
+      factor_interaction =
+        ifelse(is.null(fit_fac_int), NA, fit_fac_int$aic)
+    )
+  )
+}
+
+plot_codon_interaction <- function(result_name,
+                                   codon_results) {
+  
+  res <- codon_results[[result_name]]
+  
+  dat <- res$data
+  fit <- res$fit_fac_int
+  
+  if(is.null(fit)) {
+    stop("No interaction model found for ", result_name)
+  }
+  
+  response <- res$response
+  
+  pred_dat <- expand.grid(
+    GC3 = seq(
+      min(dat$GC3),
+      max(dat$GC3),
+      length.out = 200
+    ),
+    CMP = levels(dat$CMP)
+  )
+  
+  X <- model.matrix(
+    ~ GC3 * CMP,
+    data = pred_dat
+  )
+  
+  b <- as.numeric(coef(fit))
+  
+  pred_dat$pred <- as.numeric(
+    X %*% b
+  )
+  
+  V <- vcov(fit)
+  
+  pred_dat$se <- sqrt(
+    diag(
+      X %*% V %*% t(X)
+    )
+  )
+  
+  pred_dat <- pred_dat %>%
+    mutate(
+      lower = pred - 1.96 * se,
+      upper = pred + 1.96 * se
+    )
+  
+  ggplot() +
+    
+    geom_point(
+      data = dat,
+      aes_string(
+        x = "GC3",
+        y = response,
+        color = "CMP"
+      ),
+      alpha = 0.4
+    ) +
+    
+    geom_ribbon(
+      data = pred_dat,
+      aes(
+        GC3,
+        ymin = lower,
+        ymax = upper,
+        fill = CMP
+      ),
+      alpha = 0.2,
+      colour = NA
+    ) +
+    
+    geom_line(
+      data = pred_dat,
+      aes(
+        GC3,
+        pred,
+        color = CMP
+      ),
+      linewidth = 1
+    ) +
+    
+    labs(
+      title = paste0(
+        res$pair,
+        " (codon ",
+        res$codon,
+        ")"
+      ),
+      x = "GC3",
+      y = response
+    ) +
+    
+    theme_bw()
+}

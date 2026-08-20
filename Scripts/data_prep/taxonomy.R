@@ -74,3 +74,105 @@ merged %>%
     mean_total = mean(total, na.rm = TRUE)
   )
 
+
+plot(
+  tree,
+  cex = 0.4
+)
+
+tiff(
+  "Plots/phylogenetic_tree.tiff",
+  width = 2000,
+  height = 2800,
+  res = 300
+)
+
+plot(
+  tree,
+  show.tip.label = FALSE
+)
+
+dev.off()
+
+tax <- merged[merged$in_tree,]
+
+library(dplyr)
+
+tax_org <- tax %>%
+  select(
+    organism_id,
+    organism,
+    phylum,
+    class,
+    order,
+    family,
+    genus
+  ) %>%
+  distinct()
+
+tax_org %>%
+  summarise(
+    organisms = n_distinct(organism_id),
+    phyla = n_distinct(phylum),
+    classes = n_distinct(class),
+    orders = n_distinct(order),
+    families = n_distinct(family),
+    genera = n_distinct(genus)
+  )
+
+tax_summary <- bind_rows(
+  
+  tax_org %>%
+    count(phylum, name = "n") %>%
+    mutate(
+      level = "Phylum",
+      taxon = phylum
+    ) %>%
+    select(level, taxon, n),
+  
+  tax_org %>%
+    count(class, name = "n") %>%
+    mutate(
+      level = "Class",
+      taxon = class
+    ) %>%
+    select(level, taxon, n),
+  
+  tax_org %>%
+    count(order, name = "n") %>%
+    mutate(
+      level = "Order",
+      taxon = order
+    ) %>%
+    select(level, taxon, n),
+  
+  tax_org %>%
+    count(family, name = "n") %>%
+    mutate(
+      level = "Family",
+      taxon = family
+    ) %>%
+    select(level, taxon, n),
+  
+  tax_org %>%
+    count(genus, name = "n") %>%
+    mutate(
+      level = "Genus",
+      taxon = genus
+    ) %>%
+    select(level, taxon, n)
+  
+) %>%
+  group_by(level) %>%
+  mutate(
+    percentage = 100 * n / sum(n)
+  ) %>%
+  ungroup() %>%
+  arrange(
+    factor(level, levels = c(
+      "Phylum", "Class", "Order", "Family", "Genus"
+    )),
+    desc(n)
+  )
+
+tax_summary

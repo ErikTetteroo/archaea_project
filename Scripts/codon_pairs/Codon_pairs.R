@@ -16,6 +16,8 @@ cm_lookup <- merged %>%
 gc_lookup <- merged %>%
   select(organism_id, codon, GC3)
 
+RSCU_lookup <- merged %>%
+  select(organism_id, codon, RSCU)
 
 #add GC3
 codon_pair_usage <- codon_pair_usage %>%
@@ -32,6 +34,13 @@ codon_pair_usage <- codon_pair_usage %>%
   ) %>%
   rename(CM1 = CM)
 
+codon_pair_usage <- codon_pair_usage %>%
+  left_join(
+    RSCU_lookup,
+    by = c("organism" = "organism_id", "c1" = "codon")
+  ) %>%
+  rename(RSCU1 = RSCU)
+
 #add coverage value codon 2
 codon_pair_usage <- codon_pair_usage %>%
   left_join(
@@ -39,6 +48,13 @@ codon_pair_usage <- codon_pair_usage %>%
     by = c("organism" = "organism_id", "c2" = "codon")
   ) %>%
   rename(CM2 = CM)
+
+codon_pair_usage <- codon_pair_usage %>%
+  left_join(
+    RSCU_lookup,
+    by = c("organism" = "organism_id", "c2" = "codon")
+  ) %>%
+  rename(RSCU2 = RSCU)
 
 #combine coverage values (currently multiplied)
 codon_pair_usage <- codon_pair_usage %>%
