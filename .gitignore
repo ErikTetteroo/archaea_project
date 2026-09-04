@@ -2,5 +2,7 @@
 .RData
 .Rproj.user/
 
-Data/
+Data/cleaned_data/
+Data/manuscript/
+Data/Raw_data/
 Plots/
