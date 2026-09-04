@@ -3,7 +3,7 @@ source("R/load_project.R")
 
 # read in data
 merged <- read_csv("Data/cleaned_data/merged_codon_usage_data.csv")
-tree <- read.tree("Data/tree/filtered_690.tree")
+tree <- read.tree("Data/Raw_data//filtered_690.tree")
 
 
 # reformat tree tip labels

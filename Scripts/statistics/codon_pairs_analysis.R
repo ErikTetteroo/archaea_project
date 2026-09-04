@@ -1,53 +1,54 @@
-#load project
+# load project
 source("R/load_project.R")
 
-#read data
-pairs <- read_csv("Data/Raw_data/codon_pair_usage_clean.csv")
+# Load data
+pairs <- read_csv("Data/cleaned_data/codon_pair_usage_clean.csv")
 tree <- read.tree("Data/cleaned_data/cleaned_archaea.tree")
 
-#filter out na's
-pairs_c <- pairs %>%
+# Keep observations with an assigned coverage state for both codons
+pairs_clean <- pairs %>%
   filter(
     !is.na(CM1),
     !is.na(CM2)
   )
 
-# visualize pairs that have sufficient varying states
-pair_states <- pairs_c %>%
-  count(codon_pair, CMP) %>%
-  arrange(codon_pair, desc(n))
+# Select codon pairs with sufficient variation in coverage state
+pair_state_counts <- pairs_clean %>%
+  count(codon_pair, CMP)
 
-pair_state_table <- pairs_c %>%
-  count(codon_pair, CMP) %>%
-  tidyr::pivot_wider(
+pair_state_table <- pair_state_counts %>%
+  pivot_wider(
     names_from = CMP,
     values_from = n,
     values_fill = 0
   )
 
-# filter 
-interesting_pairs <- pairs_c %>%
-  count(codon_pair, CMP) %>%
+# Retain codon pairs with at least two coverage states containing >=30
+# observations.
+interesting_pairs <- pair_state_counts %>%
   group_by(codon_pair) %>%
-  filter(n >= 30) %>%          
+  filter(n >= 30) %>%
   summarise(
-    states = n(),
+    n_states = n(),
     .groups = "drop"
   ) %>%
-  filter(states >= 2)
+  filter(n_states >= 2)
 
-int_pair_state_table <- pair_state_table[pair_state_table$codon_pair %in% interesting_pairs$codon_pair,]
+interesting_state_table <- pair_state_table %>%
+  filter(codon_pair %in% interesting_pairs$codon_pair)
 
+#-------------------------------------------------------------------------------
+# Select pairs suitable for the 0/1/2-wobble analysis
+#-------------------------------------------------------------------------------
 
-# synergistic wobble effect analysis
-candidate_pairs <- int_pair_state_table %>%
+candidate_pairs <- interesting_state_table %>%
   filter(
     GU_X_GU >= 30,
     (GU_X_M + M_X_GU) >= 30,
     M_X_M >= 30
   )
 
-pairs_focus <- pairs_c %>%
+pairs_focus <- pairs_clean %>%
   filter(
     codon_pair %in% candidate_pairs$codon_pair,
     CMP %in% c(
@@ -56,25 +57,32 @@ pairs_focus <- pairs_c %>%
       "M_X_GU",
       "GU_X_GU"
     )
+  ) %>%
+  mutate(
+    wobbles = case_when(
+      CMP == "M_X_M" ~ 0,
+      CMP %in% c("GU_X_M", "M_X_GU") ~ 1,
+      CMP == "GU_X_GU" ~ 2,
+      TRUE ~ NA_real_
+    ),
+    
+    wobble_state = case_when(
+      CMP == "M_X_M" ~ "0_GU",
+      CMP %in% c("GU_X_M", "M_X_GU") ~ "1_GU",
+      CMP == "GU_X_GU" ~ "2_GU",
+      TRUE ~ NA_character_
+    )
   )
 
 pairs_focus <- pairs_focus %>%
   mutate(
-    wobbles =
-      (CM1 == "GU") +
-      (CM2 == "GU")
+    wobble_state = factor(
+      wobble_state,
+      levels = c("0_GU", "1_GU", "2_GU")
+    )
   )
 
-
-# visualize
-pairs_focus %>%
-  group_by(wobbles) %>%
-  summarise(
-    mean = mean(log2_RDCU),
-    median = median(log2_RDCU),
-    sd = sd(log2_RDCU)
-  )
-
+# Initial descriptive comparison
 pair_summary <- pairs_focus %>%
   group_by(codon_pair, wobbles) %>%
   summarise(
@@ -82,183 +90,159 @@ pair_summary <- pairs_focus %>%
     .groups = "drop"
   )
 
-ggplot(
+pair_boxplot <- ggplot(
   pair_summary,
-  aes(factor(wobbles), mean_RDCU)
+  aes(
+    x = factor(wobbles),
+    y = mean_RDCU
+  )
 ) +
-  geom_boxplot()
-
-
-pair_effects <- pairs_focus %>%
-  group_by(codon_pair, CMP) %>%
-  summarise(
-    mean_RDCU = mean(log2_RDCU),
-    n = n(),
-    .groups = "drop"
+  geom_boxplot() +
+  theme_bw() +
+  labs(
+    x = "Number of GU-wobble-covered codons",
+    y = "Mean log2(RDCU)"
   )
 
-#simple model
-fit <- lmer(
-  log2_RDCU ~ GC3 + factor(wobbles) +
-    (1 | codon_pair) + (1 | organism),
-  data = pairs_focus
+pair_boxplot
+
+ggsave(
+  filename = "Plots/pair_analysis_wobble_boxplot.png",
+  plot = pair_boxplot,
+  width = 7,
+  height = 5,
+  dpi = 300
 )
 
-summary(fit)
-
-#factor and numeric version for wobbles 
-pairs_focus <- pairs_focus %>%
-  mutate(
-    wobble_state = case_when(
-      CMP == "M_X_M" ~ "0_GU",
-      CMP %in% c("GU_X_M", "M_X_GU") ~ "1_GU",
-      CMP == "GU_X_GU" ~ "2_GU"
-    ),
-    
-    wobbles = case_when(
-      CMP == "M_X_M" ~ 0,
-      CMP %in% c("GU_X_M", "M_X_GU") ~ 1,
-      CMP == "GU_X_GU" ~ 2
-    )
-  )
-
-
-
-
-# run individual model for each pair
+# Phylogenetic models for individual codon pairs
 pair_results <- list()
 
 pair_names <- unique(pairs_focus$codon_pair)
 
-for(i in seq_along(pair_names)) {
+for (i in seq_along(pair_names)) {
   
   pair_name <- pair_names[i]
   
-  cat(i, "/", length(pair_names), "-", pair_name, "\n")
-  
-  pair_dat <- pairs_focus %>%
-    filter(codon_pair == pair_name)
-  
-  
-  pair_dat$wobble_state <- factor(
-    pair_dat$wobble_state,
-    levels = c("0_GU","1_GU","2_GU")
+  message(
+    "Pair ",
+    i,
+    " / ",
+    length(pair_names),
+    ": ",
+    pair_name
   )
   
-  row.names(pair_dat) <- pair_dat$organism
+  pair_data <- pairs_focus %>%
+    filter(codon_pair == pair_name)
+  
+  rownames(pair_data) <- pair_data$organism
   
   fit_gc <- tryCatch(
-    
     phylolm(
       log2_RDCU ~ GC3,
       phy = tree,
-      data = pair_dat,
+      data = pair_data,
       model = "lambda"
     ),
-    
     error = function(e) {
-      message("GC model failed for ", pair_name)
-      message(e$message)
+      message("  GC3 model failed: ", e$message)
       NULL
     }
   )
   
-  fit_num <- tryCatch(
-    
+  fit_numeric <- tryCatch(
     phylolm(
       log2_RDCU ~ GC3 + wobbles,
       phy = tree,
-      data = pair_dat,
+      data = pair_data,
       model = "lambda"
     ),
-    
     error = function(e) {
-      message("State model failed for ", pair_name)
-      message(e$message)
+      message("  Numeric wobble model failed: ", e$message)
       NULL
     }
   )
   
-  fit_num_int <- tryCatch(
-    
+  fit_numeric_interaction <- tryCatch(
     phylolm(
       log2_RDCU ~ GC3 + wobbles + GC3:wobbles,
       phy = tree,
-      data = pair_dat,
+      data = pair_data,
       model = "lambda"
     ),
-    
     error = function(e) {
-      message("State model failed for ", pair_name)
-      message(e$message)
+      message("  Numeric interaction model failed: ", e$message)
       NULL
     }
   )
   
-  fit_fac <- tryCatch(
-    
+  fit_factor <- tryCatch(
     phylolm(
       log2_RDCU ~ GC3 + wobble_state,
       phy = tree,
-      data = pair_dat,
+      data = pair_data,
       model = "lambda"
     ),
-    
     error = function(e) {
-      message("State model failed for ", pair_name)
-      message(e$message)
+      message("  Factor wobble model failed: ", e$message)
       NULL
     }
   )
   
-  fit_fac_int <- tryCatch(
-    
+  fit_factor_interaction <- tryCatch(
     phylolm(
       log2_RDCU ~ GC3 + wobble_state + GC3:wobble_state,
       phy = tree,
-      data = pair_dat,
+      data = pair_data,
       model = "lambda"
     ),
-    
     error = function(e) {
-      message("State model failed for ", pair_name)
-      message(e$message)
+      message("  Factor interaction model failed: ", e$message)
       NULL
     }
   )
   
   pair_results[[pair_name]] <- list(
-    data = pair_dat,
+    data = pair_data,
     
     fit_gc = fit_gc,
-    fit_num = fit_num,
-    fit_num_int = fit_num_int,
-    fit_fac = fit_fac,
-    fit_fac_int = fit_fac_int,
+    fit_num = fit_numeric,
+    fit_num_int = fit_numeric_interaction,
+    fit_fac = fit_factor,
+    fit_fac_int = fit_factor_interaction,
     
     aic = c(
-      gc = ifelse(is.null(fit_gc), NA, fit_gc$aic),
-      numeric = ifelse(is.null(fit_num), NA, fit_num$aic),
-      numeric_interaction = ifelse(is.null(fit_num_int), NA, fit_num_int$aic),
-      factor = ifelse(is.null(fit_fac), NA, fit_fac$aic),
-      factor_interaction = ifelse(is.null(fit_fac_int), NA, fit_fac_int$aic)
+      gc = if (is.null(fit_gc)) NA_real_ else fit_gc$aic,
+      numeric = if (is.null(fit_numeric)) NA_real_ else fit_numeric$aic,
+      numeric_interaction = if (is.null(fit_numeric_interaction)) {
+        NA_real_
+      } else {
+        fit_numeric_interaction$aic
+      },
+      factor = if (is.null(fit_factor)) NA_real_ else fit_factor$aic,
+      factor_interaction = if (is.null(fit_factor_interaction)) {
+        NA_real_
+      } else {
+        fit_factor_interaction$aic
+      }
     )
   )
 }
 
+# Summarise pair-level model comparisons
 pair_summary_results <- map_dfr(
   names(pair_results),
-  function(x){
+  function(pair_name) {
     
-    aics <- pair_results[[x]]$aic
+    aics <- pair_results[[pair_name]]$aic
     
     tibble(
-      codon_pair = x,
-      gc = aics["gc"],
-      numeric = aics["numeric"],
-      numeric_interaction = aics["numeric_interaction"],
-      factor = aics["factor"],
-      factor_interaction = aics["factor_interaction"],
+      codon_pair = pair_name,
+      gc = unname(aics["gc"]),
+      numeric = unname(aics["numeric"]),
+      numeric_interaction = unname(aics["numeric_interaction"]),
+      factor = unname(aics["factor"]),
+      factor_interaction = unname(aics["factor_interaction"])
     )
   }
 )
@@ -266,123 +250,168 @@ pair_summary_results <- map_dfr(
 pair_summary_results <- pair_summary_results %>%
   rowwise() %>%
   mutate(
-    best = min(c(gc, numeric, numeric_interaction, factor, factor_interaction), na.rm = TRUE),
+    best = min(
+      c(
+        gc,
+        numeric,
+        numeric_interaction,
+        factor,
+        factor_interaction
+      ),
+      na.rm = TRUE
+    ),
+    
     delta_gc = gc - best,
     delta_numeric = numeric - best,
     delta_numeric_interaction = numeric_interaction - best,
     delta_factor = factor - best,
-    delta_factor_interaction = factor_interaction - best
-  )
-
-pair_summary_results %>%
-  mutate(
-    best_model = case_when(
-      delta_gc == 0 ~ "GC",
-      delta_numeric == 0 ~ "numeric",
-      delta_factor == 0 ~ "factor",
-      delta_numeric_interaction == 0 ~ "numeric_interaction",
-      delta_factor_interaction == 0 ~ "factor_interaction"
+    delta_factor_interaction = factor_interaction - best,
+    
+    # Improvement over the GC3-only model
+    delta_to_gc = gc - min(
+      c(
+        gc,
+        numeric,
+        numeric_interaction,
+        factor,
+        factor_interaction
+      ),
+      na.rm = TRUE
     )
   ) %>%
-  count(best_model)
-
-pair_summary_results <- pair_summary_results %>%
-  mutate(
-    delta_to_gc = gc - pmin(gc, numeric, numeric_interaction ,factor, factor_interaction)
-  )
-
-#visualize results
-pair_summary_results <- pair_summary_results %>%
+  ungroup() %>%
   mutate(
     best_model = case_when(
       delta_gc == 0 ~ "GC3",
-      delta_numeric == 0 ~ "GC3 + num(wobble)",
-      delta_numeric_interaction == 0 ~ "GC3 + num(wobble) + GC3:num(wobble)",
+      delta_numeric == 0 ~ "GC3 + numeric wobble",
+      delta_numeric_interaction == 0 ~
+        "GC3 + numeric wobble + interaction",
       delta_factor == 0 ~ "GC3 + factor(wobble)",
-      delta_factor_interaction == 0 ~ "GC3 + factor(wobble) + GC3:factor(wobble)"
+      delta_factor_interaction == 0 ~
+        "GC3 + factor(wobble) + interaction",
+      TRUE ~ NA_character_
     )
   )
 
-
-ggplot(
+# Plot improvement over the GC3-only model
+pair_delta_aic_plot <- ggplot(
   pair_summary_results,
   aes(
-    reorder(codon_pair, delta_to_gc),
-    delta_to_gc,
+    x = reorder(codon_pair, delta_to_gc),
+    y = delta_to_gc,
     fill = best_model
   )
 ) +
   geom_col() +
-  coord_flip()
+  coord_flip() +
+  theme_bw() +
+  labs(
+    x = "Codon pair",
+    y = "Improvement in AIC relative to GC3-only model",
+    fill = "Best model"
+  )
 
+pair_delta_aic_plot
 
+ggsave(
+  filename = "Plots/pair_analysis_delta_AIC.png",
+  plot = pair_delta_aic_plot,
+  width = 8,
+  height = 10,
+  dpi = 300
+)
 
-# create plots and analyse individual pairs
+# Generate plots for the 10 pairs with the greatest improvement
 top_pairs <- pair_summary_results %>%
   arrange(desc(delta_to_gc)) %>%
+  slice_head(n = 10) %>%
   pull(codon_pair)
 
-top_pairs <- top_pairs[1:10]
+dir.create(
+  "Plots/pair_plots",
+  showWarnings = FALSE,
+  recursive = TRUE
+)
 
-dir.create("Plots/pair_plots", showWarnings = FALSE)
-
-for(pair_name in top_pairs) {
+for (pair_name in top_pairs) {
   
   delta <- pair_summary_results %>%
     filter(codon_pair == pair_name) %>%
     pull(delta_to_gc)
   
-  p <- plot_pair_interaction(
+  plot <- plot_pair_interaction(
     pair_name,
     pair_results
-  )
-  
-  p <- p +
+  ) +
     labs(
       title = paste0(
         pair_name,
-        "  (ΔAIC = ",
-        round(delta,1),
+        " (ΔAIC = ",
+        round(delta, 1),
         ")"
       )
     )
   
   ggsave(
-    file.path(
+    filename = file.path(
       "Plots/pair_plots",
       paste0(pair_name, ".jpeg")
     ),
-    p,
+    plot = plot,
     width = 6,
-    height = 5
+    height = 5,
+    dpi = 300
   )
 }
 
-top_pair_info <- pairs_focus %>%
-  filter(codon_pair %in% top_pairs) %>%
-  group_by(codon_pair) %>%
-  summarise(
-    c1 = first(c1),
-    c2 = first(c2),
-    aa1 = first(aa1),
-    aa2 = first(aa2),
-    .groups = "drop"
+# Prepare data for constituent-codon follow-up analysis
+
+# Number of synonymous codons per amino acid.
+# This is the maximum possible RSCU for a codon if all synonymous codons
+# are represented equally in the denominator.
+codon_table <- give_codon_table()
+
+aa_sizes <- codon_table %>%
+  count(
+    aa,
+    name = "max_RSCU"
   )
 
-# visualize distribution of samples within 1 wobble state
-pair_state_counts <-
-  pairs_focus %>%
-  count(codon_pair, CMP) %>%
-  tidyr::pivot_wider(
-    names_from = CMP,
-    values_from = n,
-    values_fill = 0
+pairs_focus <- pairs_focus %>%
+  left_join(
+    aa_sizes,
+    by = c("aa1" = "aa")
   ) %>%
+  rename(max_RSCU1 = max_RSCU) %>%
+  left_join(
+    aa_sizes,
+    by = c("aa2" = "aa")
+  ) %>%
+  rename(max_RSCU2 = max_RSCU) %>%
   mutate(
-    one_total = GU_X_M + M_X_GU
+    scaled_RSCU1 = RSCU1 / max_RSCU1,
+    scaled_RSCU2 = RSCU2 / max_RSCU2
   )
 
+# Avoid logit values of +/- infinity when scaled RSCU is exactly 0 or 1.
+eps <- 1e-4
 
+pairs_focus <- pairs_focus %>%
+  mutate(
+    scaled_RSCU1 = pmin(
+      pmax(scaled_RSCU1, eps),
+      1 - eps
+    ),
+    scaled_RSCU2 = pmin(
+      pmax(scaled_RSCU2, eps),
+      1 - eps
+    ),
+    
+    logit_RSCU1 = qlogis(scaled_RSCU1),
+    logit_RSCU2 = qlogis(scaled_RSCU2)
+  )
+
+# Constituent-codon follow-up analysis
 codon_results <- list()
 
 pair_names <- unique(pairs_focus$codon_pair)
@@ -598,31 +627,6 @@ codon_summary_results <- codon_summary_results %>%
     
   )
 
-ggplot(
-  codon_summary_results,
-  aes(
-    reorder(result, delta_to_gc),
-    delta_to_gc,
-    fill = best_model
-  )
-) +
-  geom_col() +
-  coord_flip() +
-  facet_wrap(~category, scales = "free_y")
-
-ggplot(
-  codon_summary_results,
-  aes(
-    reorder(result, delta_to_gc),
-    delta_to_gc,
-    fill = best_model
-  )
-) +
-  geom_col() +
-  coord_flip() +
-  facet_wrap(~codon)
-
-
 top_codons <- codon_summary_results %>%
   arrange(desc(delta_to_gc)) %>%
   pull(result)
@@ -666,55 +670,6 @@ for(result_name in top_codons){
   )
   
 }
-
-table <- give_codon_table()
-
-# Number of synonymous codons per amino acid
-aa_sizes <- table %>%
-  count(aa, name = "max_RSCU")
-
-# Join for codon 1
-pairs_focus <- pairs_focus %>%
-  left_join(
-    aa_sizes,
-    by = c("aa1" = "aa")
-  ) %>%
-  rename(max_RSCU1 = max_RSCU)
-
-# Join for codon 2
-pairs_focus <- pairs_focus %>%
-  left_join(
-    aa_sizes,
-    by = c("aa2" = "aa")
-  ) %>%
-  rename(max_RSCU2 = max_RSCU)
-
-# Scale to 0-1
-pairs_focus <- pairs_focus %>%
-  mutate(
-    scaled_RSCU1 = RSCU1 / max_RSCU1,
-    scaled_RSCU2 = RSCU2 / max_RSCU2
-  )
-
-summary(pairs_focus$scaled_RSCU1)
-summary(pairs_focus$scaled_RSCU2)
-
-eps <- 1e-4
-
-pairs_focus <- pairs_focus %>%
-  mutate(
-    scaled_RSCU1 = pmin(pmax(scaled_RSCU1, eps), 1 - eps),
-    scaled_RSCU2 = pmin(pmax(scaled_RSCU2, eps), 1 - eps),
-    
-    logit_RSCU1 = qlogis(scaled_RSCU1),
-    logit_RSCU2 = qlogis(scaled_RSCU2)
-  )
-
-ggplot(pairs_focus,
-       aes(GC3,
-           fill = wobble_state)) +
-  geom_histogram(binwidth=.02,
-                 position="fill")
 
 
 codon_heatmap <- codon_summary_results %>%
@@ -764,7 +719,7 @@ heatmap_long <- heatmap_dat %>%
   )
 
 
-ggplot(
+constituent_heatmap <- ggplot(
   heatmap_long,
   aes(
     x = analysis,
@@ -796,40 +751,12 @@ ggplot(
     y = NULL,
     fill = "ΔAIC\nvs GC3"
   )
+constituent_heatmap
 
-
-ccgaag_dat <- pairs_focus %>%
-  filter(codon_pair == "CCGAAG")
-
-tip_groups <- setNames(
-  ccgaag_dat$CMP,
-  ccgaag_dat$organism
+ggsave(
+  filename = "Plots/constituent_codon_heatmap.png",
+  plot = constituent_heatmap,
+  width = 7,
+  height = 10,
+  dpi = 300
 )
-
-tip_state <- tip_groups[tree$tip.label]
-
-cols <- c(
-  "GU_X_GU" = "#d73027",
-  "GU_X_M"  = "#fc8d59",
-  "M_X_GU"  = "#91bfdb",
-  "M_X_M"   = "#4575b4"
-)
-
-tip_col <- cols[tip_state]
-tip_col[is.na(tip_col)] <- "grey80"
-
-plot(
-  tree,
-  tip.color = tip_col,
-  cex = 0.4
-)
-
-legend(
-  "topleft",
-  legend = names(cols),
-  col = cols,
-  pch = 19,
-  bty = "n"
-)
-
-

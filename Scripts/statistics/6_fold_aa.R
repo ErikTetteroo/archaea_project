@@ -194,21 +194,26 @@ best_arg$var_delta <-
   delta_aic(best_arg$var_aic)
 
 # save output
-save_sixfold(
+p1 <- save_sixfold(
   fit = fit_ser,
   best = best_ser,
   aa = "Plots/aa/six_fold/Ser"
 )
 
-save_sixfold(
+p2 <- save_sixfold(
   fit = fit_leu,
   best = best_leu,
   aa = "Plots/aa/six_fold/Leu"
 )
 
-save_sixfold(
+p3 <- save_sixfold(
   fit = fit_arg,
   best = best_arg,
   aa = "Plots/aa/six_fold/Arg"
 )
+
+pser <- p1 + ggtitle('Ser')
+pleu <- p2 + ggtitle("Leu")
+parg <- p3 + ggtitle("Arg")
+
 

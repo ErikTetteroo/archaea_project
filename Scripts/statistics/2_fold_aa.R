@@ -27,9 +27,14 @@ lys <- analyze_twofold(two_fold_subsets$Lys,"AAG",tree)
 glu <- analyze_twofold(two_fold_subsets$Glu,"GAG",tree)
 
 # save output
-save_twofold(gln,"plots/aa/two_fold/Gln")
-save_twofold(lys,"plots/aa/two_fold/Lys")
-save_twofold(glu,"plots/aa/two_fold/Glu")
+p1 <- save_twofold(gln,"plots/aa/two_fold/Gln")
+p2 <- save_twofold(lys,"plots/aa/two_fold/Lys")
+p3 <- save_twofold(glu,"plots/aa/two_fold/Glu")
+
+pgln <- p1 + ggtitle('Gln')
+plys <- p2 + ggtitle('Lys')
+pglu <- p3 + ggtitle('Glu')
+
 
 # summary table
 bind_rows(

@@ -76,7 +76,8 @@ manuscript_as_trna <- manuscript_clean %>%
     tRNA_type = trna_type,
     anticodon = anticodon,
     
-    # High score so they survive filtering
+    # Assign a high score so manually curated tRNAs are retained
+    # by downstream tRNA filtering.
     inf_score = 999,
     
     note = ifelse(

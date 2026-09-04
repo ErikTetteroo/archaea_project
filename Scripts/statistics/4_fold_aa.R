@@ -134,26 +134,31 @@ best_gly$var_delta <-
   delta_aic(best_gly$var_aic)
 
 # save outputs
-save_fourfold(
+p1 <- save_fourfold(
   fit = fit_val,
   best = best_val,
   aa = "Plots/aa/four_fold/Val"
 )
-save_fourfold(
+p2 <- save_fourfold(
   fit = fit_thr,
   best = best_thr,
   aa = "Plots/aa/four_fold/Thr"
 )
-save_fourfold(
+p3 <- save_fourfold(
   fit = fit_ala,
   best = best_ala,
   aa = "Plots/aa/four_fold/Ala"
 )
-save_fourfold(
+p4 <- save_fourfold(
   fit = fit_gly,
   best = best_gly,
   aa = "Plots/aa/four_fold/Gly"
 )
+
+pval <- p1 + ggtitle("Val")
+pthr <- p2 + ggtitle("Thr")
+pala <- p3 + ggtitle("Ala")
+pgly <- p4 + ggtitle("Gly")
 
 #---------------------------------------------------------------
 # Proline
@@ -323,6 +328,8 @@ pred_dat <- expand.grid(
   state = unique(pro_fit$dat$pro_state)
 )
 
+pro_fit$dat$state <- pro_fit$dat$pro_state
+
 fit_vis <- pro_fit$fit_var3
 
 X <- model.matrix(
@@ -346,6 +353,12 @@ pred_dat <- pred_dat %>%
     upper = pred + 1.96 * se
   )
 
+dir.create(
+  "Plots/aa/four_fold/Pro",
+  recursive = TRUE,
+  showWarnings = FALSE
+)
+
 jpeg(file.path("Plots/aa/four_fold/Pro/variable_axis.jpeg"),
     width = 600,
     height = 500)
@@ -355,7 +368,7 @@ p <- ggplot(
   aes(
     GC3,
     CCG_axis,
-    color = pro_state
+    color = state
   )
 ) +
   geom_point(alpha = 0.3) +
@@ -386,6 +399,8 @@ p <- ggplot(
 print(p)
 
 dev.off()
+
+ppro <- p +ggtitle("Pro")
 
 ## ----------------------------
 ## Residual plot

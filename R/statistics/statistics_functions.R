@@ -120,7 +120,11 @@ coef_table <- function(model) {
 
 save_twofold <- function(res, aa) {
   
-  dir.create(aa, showWarnings = FALSE)
+  dir.create(
+    aa,
+    recursive = TRUE,
+    showWarnings = FALSE
+  )
   
   #---------------------------
   # choose best model
@@ -268,7 +272,7 @@ save_twofold <- function(res, aa) {
   qqline(residuals(best))
   
   dev.off()
-  
+  return(p1)
 }
 
 summary_table <- function(res, aa) {
@@ -451,7 +455,11 @@ save_fourfold <- function(fit,
                           best,
                           aa) {
   
-  dir.create(aa, showWarnings = FALSE)
+  dir.create(
+    aa,
+    recursive = TRUE,
+    showWarnings = FALSE
+  )
   
   ## ----------------------------
   ## AIC table
@@ -605,6 +613,7 @@ save_fourfold <- function(fit,
   qqline(residuals(best$var_fit))
   
   dev.off()
+  return(p)
 }
 
 # six fold
@@ -748,7 +757,11 @@ best_sixfold <- function(fit) {
 
 save_sixfold <- function(fit, best, aa) {
   
-  dir.create(aa, showWarnings = FALSE)
+  dir.create(
+    aa,
+    recursive = TRUE,
+    showWarnings = FALSE
+  )
   
   ## ----------------------------
   ## AIC table
@@ -895,6 +908,8 @@ save_sixfold <- function(fit, best, aa) {
   
   dev.off()
   
+  pvar <- p
+  
   ## ----------------------------
   ## GC axis
   ## ----------------------------
@@ -1032,6 +1047,7 @@ save_sixfold <- function(fit, best, aa) {
   qqline(residuals(fit_vis))
   
   dev.off()
+  return(pvar)
 }
 
 ## codon pairs analysis

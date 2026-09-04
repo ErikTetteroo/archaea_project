@@ -16,6 +16,6 @@ my_data_unique <- as.data.frame(organism_id) %>%
 
 matches <- inner_join(u_accesions, my_data_unique, by = "core")
 
-#save matches lookup table and add in a column to the merged dataframe
+# Save lookup table of genomes shared with the manuscript
 write_csv(matches,file = "Data/manuscript/manuscript_id_match.csv")
 })
