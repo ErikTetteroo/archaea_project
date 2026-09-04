@@ -1,3 +1,19 @@
+# Create project directories if they do not already exist
+project_dirs <- c(
+  "Plots",
+  "Data",
+  "Data/cleaned_data",
+  "Data/manuscript"
+)
+
+for (dir in project_dirs) {
+  dir.create(
+    dir,
+    recursive = TRUE,
+    showWarnings = FALSE
+  )
+}
+
 #------------------------------
 # Load Packages
 #------------------------------

@@ -87,4 +87,4 @@ source("Scripts/creating_plots/combined_codon_analysis_plot.R")
 source("Scripts/data_prep/Codon_pairs.R")
 
 # Run pair-level and constituent-codon analyses
-source("Scripts/statistics/codon_pair_analysis.R")
+source("Scripts/statistics/codon_pairs_analysis.R")
